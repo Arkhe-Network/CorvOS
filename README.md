@@ -1,0 +1,2 @@
+# CorvOS
+Linux + Bitcoin
