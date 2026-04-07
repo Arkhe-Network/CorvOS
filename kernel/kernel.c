@@ -20,11 +20,6 @@
 #include "devices.h"
 #include "arkhe_drivers.h"
 #include "phi_pcie.h"
-#include "interrupts.h"
-
-// Prototypes for apps and drivers
-void arkhe_fold();
-void mouse_init();
 
 // CorvOS Kernel Entry Point
 // Inspirado em Linux, com extensões para sistemas distribuídos baseados em Arkhe-PNT
@@ -100,14 +95,11 @@ void kernel_main() {
     console_writeln(sval);
 
     // Loop principal do kernel
-    printf("Starting Arkhe OS Main Loop Integration...\n");
-    for (int i = 0; i < 5; i++) {
-        arkhe_daemon_run();
-        // Simulate some workload
-        if (i == 2) {
-            printf("Kernel: Dispatching Arkhe-Fold simulation...\n");
-            arkhe_fold();
-        }
+    proc_create(shell_run, 1);
+    while (1) {
+       arkhe_daemon_run();
+       proc_schedule();
+       timer_delay(100);  // Simple delay
     }
     printf("Kernel: Integration check complete.\n");
 }

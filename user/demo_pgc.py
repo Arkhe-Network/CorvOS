@@ -1,64 +1,59 @@
 #!/usr/bin/env python3
 """
-Comprehensive Demonstration of Arkhe-PGC v4.0:
-Cross-Disorder Phase Architecture, Single-Cell eQTLs, and Quadrant Analysis.
+Demonstration of Arkhe-PGC v3.0 Pipeline:
+Simulation -> LD Clumping -> Coherence -> Enrichment Analysis
 """
 
-from arkhe_pgc import ArkhePGC, simulate_gwas_pair
+from arkhe_pgc import ArkhePGC, simulate_realistic_gwas
 import numpy as np
-import os
 
-def run_v4_demo():
-    print("🧬 Arkhe-PGC v4.0: Comprehensive Transdiagnostic Demo")
+def run_demo():
+    print("🧬 Arkhe-PGC v3.0: Genetic Coherence & Pathway Enrichment Demo")
     print("="*60)
 
-    # 1. Simulate SCZ and BIP datasets
+    # 1. Simulate Realistic GWAS Data
     n_snps = 5000
-    df_scz, df_bip = simulate_gwas_pair(n_snps=n_snps, overlap_fraction=0.5, seed=42)
-    print(f"Simulated SCZ and BIP datasets ({n_snps} SNPs each).")
+    df = simulate_realistic_gwas(n_snps=n_snps, seed=42)
+    print(f"Simulated GWAS with {n_snps} SNPs.")
 
     processor = ArkhePGC(window_size_bp=250000)
 
-    # 2. Process metrics
-    df_scz = processor.calculate_metrics(df_scz)
-    df_bip = processor.calculate_metrics(df_bip)
+    # 2. Step 1: Initial Metrics & Raw Coherence
+    df = processor.calculate_metrics(df)
+    lambda_raw = processor.compute_coherence(df)
+    print(f"\nInitial λ₂ (with LD inflation): {lambda_raw:.4f}")
 
-    scz_pruned = processor.ld_clumping(df_scz)
-    bip_pruned = processor.ld_clumping(df_bip)
+    # 3. Step 2: LD Clumping (Pruning)
+    df_pruned = processor.ld_clumping(df)
+    print(f"Retained {len(df_pruned)} SNPs after physical clumping.")
 
-    print(f"SCZ λ₂: {processor.compute_coherence(scz_pruned):.4f}")
-    print(f"BIP λ₂: {processor.compute_coherence(bip_pruned):.4f}")
+    # 4. Step 3: Pruned Coherence
+    lambda_pruned = processor.compute_coherence(df_pruned)
+    print(f"Pruned λ₂ (Real biological signal): {lambda_pruned:.4f}")
 
-    # 3. Cross-Disorder Phase Alignment
-    lambda_ab = processor.cross_disorder_coherence(scz_pruned, bip_pruned)
-    print(f"\nCross-Disorder Coherence λ_AB: {lambda_ab:.4f}")
+    reduction = (1 - lambda_pruned / lambda_raw) * 100
+    print(f"Reduction in Coherence Inflation: {reduction:.1f}%")
 
-    # 4. Advanced Mapping: Single-Cell Resolution
-    print("\nFunctional Mapping (Cell-Type Resolution):")
-    processor.map_functional_genes(scz_pruned, method='single_cell')
+    # 5. Step 4: Pathway Enrichment
+    print("\nRunning Pathway Enrichment...")
+    processor.fetch_online_annotations(df_pruned['SNP'].tolist())
+    processor.load_gene_sets(mock=True)
 
-    # Pathway analysis for Neuronal Sync
-    pathway_map = {
-        'Neuronal_Sync': [f"NEURON_GENE_{i}" for i in range(50)],
-        'Glial_Metabolism': [f"GLIA_GENE_{i}" for i in range(50, 100)]
-    }
+    enrichment = processor.analyze_enrichment(df_pruned)
 
-    enrichment = processor.analyze_enrichment(scz_pruned, pathway_map)
-    print("\nEnrichment & Internal Pathway Coherence (SCZ):")
-    print(enrichment[['Pathway', 'Enrichment', 'Path_Coherence', 'P-value']])
+    if not enrichment.empty:
+        print("\nTop Enriched Pathways (FDR Corrected):")
+        print(enrichment[['Pathway', 'Hits', 'Enrichment', 'FDR_adj_P']].head())
 
-    # 5. Advanced Visualizations
-    print("\nGenerating Advanced Visualizations...")
-    os.makedirs('user', exist_ok=True)
-    processor.plot_phase_overlap_quadrant(scz_pruned, bip_pruned, output_file='user/arkhe_phase_polar.png')
-    processor.plot_venn_shared_genes(scz_pruned, bip_pruned, output_file='user/arkhe_gene_overlap.png')
-
-    print("📊 Polar Phase Plot saved to user/arkhe_phase_polar.png")
-    print("📊 Gene Overlap Plot saved to user/arkhe_gene_overlap.png")
+        # Save visualization
+        processor.visualize_enrichment(enrichment, output_file='user/arkhe_enrichment.png')
+        print(f"\n📊 Enrichment plot saved to user/arkhe_enrichment.png")
+    else:
+        print("\nNo significant enrichment found.")
 
     print("\n" + "="*60)
-    print("Conclusion: Arkhe-PGC v4.0 provides a complete transdiagnostic view,")
-    print("mapping shared phase architectures across disorders with functional precision.")
+    print("Conclusion: Arkhe-PGC successfully identifies independent biological signals")
+    print("and maps them to functional pathways using hypergeometric testing and FDR.")
 
 if __name__ == "__main__":
-    run_v4_demo()
+    run_demo()

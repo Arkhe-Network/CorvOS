@@ -4,7 +4,6 @@
 #include <complex.h>
 #include "phasevm.h"
 #include "arkhe_daemon.h"
-#include "process.h"
 
 // Simplified Kuramoto synchronization model
 float complex kuramoto_step(float complex theta, float omega, float K, float r, float psi) {
@@ -79,11 +78,8 @@ void vm_execute(PhaseVM *vm, uint8_t *bytecode) {
                 break;
             case VM_COHERENCE_WAIT:
                 printf("PhaseVM: COHERENCE_WAIT - Blocking for lambda_2 > 0.95\n");
-                if (arkhe_get_global_coherence() < 0.95f) {
-                    // Yield to allow daemon to update global coherence
-                    proc_yield();
-                    // Do not increment PC, so we check again when scheduled
-                    return;
+                while (arkhe_get_global_coherence() < 0.95f) {
+                    // spin or yield
                 }
                 vm->pc++;
                 break;

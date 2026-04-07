@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Arkhe-PGC v4.0: Functional & Cross-Disorder Phase Genetics Framework.
-Integrated with GTEx/Single-Cell mapping, Cross-Disorder overlap, and Quadrant Phase Analysis.
+Arkhe-PGC v3.0: Genetic Phase Coherence & Pathway Enrichment Analysis.
+Integrated module for LD clumping, IVW coherence, and biological function mapping.
 """
 
 import numpy as np
@@ -9,6 +9,8 @@ import pandas as pd
 from scipy import stats
 import matplotlib.pyplot as plt
 import seaborn as sns
+import requests
+import time
 import os
 import warnings
 
@@ -19,17 +21,19 @@ class ArkhePGC:
         self.window_size = window_size_bp
         self.snp_to_genes = {}
         self.pathway_genes = {}
-        self.cell_type_eqtl_map = {}
 
-    # --- CORE PHASE & COHERENCE ---
+    # --- PHASE & COHERENCE ---
 
     def calculate_metrics(self, df, use_ivw=True):
-        """Calculates weights and complex phases using quadrant-aware mapping."""
+        """
+        Calculates weights and complex phases using quadrant-aware mapping.
+        """
         if use_ivw and 'SE' in df.columns:
             df['weight'] = 1.0 / (df['SE'] ** 2 + 1e-10)
         else:
             df['weight'] = -np.log10(np.clip(df['P'], 1e-300, 1))
 
+        # Scaling for robust phase calculation
         b_val = df['BETA'].values
         w_val = df['weight'].values
         b_scale = np.std(b_val) if np.std(b_val) > 0 else 1.0
@@ -46,6 +50,8 @@ class ArkhePGC:
         z = df['complex_vec'].values
         return np.abs(np.sum(w * z)) / np.sum(w)
 
+    # --- LD PRUNING (CLUMPING) ---
+
     def ld_clumping(self, df):
         """Physical Clumping to reduce LD inflation."""
         if df.empty: return df
@@ -61,144 +67,123 @@ class ArkhePGC:
                 chrom_df = chrom_df[~mask]
         return pd.DataFrame(pruned_list)
 
-    # --- ADVANCED MAPPING (GTEx & Single-Cell) ---
-
-    def map_functional_genes(self, df, method='gtex_brain'):
-        """
-        Maps SNPs to genes using eQTL signals.
-        'gtex_brain': Standard brain tissue eQTLs.
-        'single_cell': Cell-type specific eQTLs (Neuronal, Glial).
-        """
-        mapping = {}
-        for snp in df['SNP']:
-            if method == 'single_cell':
-                # Mock Single-Cell mapping: SNPs rs0-rs49 are Neuronal, rs50-rs99 are Glial
-                snp_id = int(snp.replace('rs', ''))
-                if snp_id < 50:
-                    mapping[snp] = {'gene': f"NEURON_GENE_{snp_id}", 'cell': 'Excitatory_Neuron'}
-                else:
-                    mapping[snp] = {'gene': f"GLIA_GENE_{snp_id}", 'cell': 'Microglia'}
-            else:
-                # Mock GTEx Brain mapping
-                mapping[snp] = {'gene': f"REG_GENE_{snp.replace('rs', '')}", 'cell': 'Whole_Brain'}
-
-        self.snp_to_genes = mapping
-        return mapping
-
-    # --- CROSS-DISORDER ANALYSIS ---
-
-    def cross_disorder_coherence(self, df1, df2):
-        """
-        Calculates λ_AB: cross-disorder phase alignment.
-        """
-        common = pd.merge(df1, df2, on='SNP', suffixes=('_A', '_B'))
-        if common.empty: return 0.0
-
-        w_a = common['weight_A'].values
-        w_b = common['weight_B'].values
-        c_a = common['complex_vec_A'].values
-        c_b = common['complex_vec_B'].values
-
-        combined_w = w_a * w_b
-        phase_diff = c_a * np.conj(c_b)
-
-        lambda_ab = np.abs(np.sum(combined_w * phase_diff)) / np.sum(combined_w)
-        return lambda_ab
-
     # --- PATHWAY ENRICHMENT ---
 
-    def analyze_enrichment(self, df_pruned, pathway_map):
-        """Hypergeometric enrichment with internal pathway coherence score."""
-        gene_set = {v['gene'] for k, v in self.snp_to_genes.items() if k in set(df_pruned['SNP'])}
+    def fetch_online_annotations(self, snps, batch_size=200):
+        """Fetches Ensembl annotations (simulated/mocked for demo)."""
+        # In a real scenario, this would call Ensembl REST API.
+        # For the demonstration, we'll map SNPs to mock gene IDs.
+        for snp in snps:
+            self.snp_to_genes[snp] = f"GENE_{snp.replace('rs', '')}"
+        return self.snp_to_genes
 
-        all_pathway_genes = set()
-        for genes in pathway_map.values():
-            all_pathway_genes.update(genes)
+    def load_gene_sets(self, mock=True):
+        """Loads GMT gene sets (mocked for demo)."""
+        if mock:
+            self.pathway_genes = {
+                "Calcium_Signaling": {f"GENE_{i}" for i in range(100)},
+                "Glutamatergic_Synapse": {f"GENE_{i}" for i in range(50, 150)},
+                "Dopaminergic_Synapse": {f"GENE_{i}" for i in range(150, 250)},
+                "Neuroactive_Ligand_Receptor": {f"GENE_{i}" for i in range(250, 400)}
+            }
+        return self.pathway_genes
+
+    def analyze_enrichment(self, df_pruned, min_size=5, max_size=500):
+        """Hypergeometric test for pathway over-representation."""
+        # 1. Map SNPs to Genes
+        snp_genes = []
+        for snp in df_pruned['SNP']:
+            if snp in self.snp_to_genes:
+                snp_genes.append(self.snp_to_genes[snp])
+
+        gene_set = set(snp_genes)
+        if not gene_set: return pd.DataFrame()
+
+        # 2. Background: all genes in any pathway
+        background_genes = set()
+        for genes in self.pathway_genes.values():
+            background_genes.update(genes)
 
         results = []
-        N = len(all_pathway_genes)
-        n = len(gene_set.intersection(all_pathway_genes))
+        N = len(background_genes)
+        n = len(gene_set.intersection(background_genes))
 
-        for name, p_genes in pathway_map.items():
+        for pathway, p_genes in self.pathway_genes.items():
+            if len(p_genes) < min_size or len(p_genes) > max_size: continue
+
             overlap = gene_set.intersection(p_genes)
             k = len(overlap)
-            K = len(set(p_genes).intersection(all_pathway_genes))
+            K = len(p_genes.intersection(background_genes))
 
             if k > 0:
                 p_val = stats.hypergeom.sf(k - 1, N, K, n)
-                # Internal phase stability for this pathway
-                p_coherence = self._compute_internal_pathway_coherence(df_pruned, overlap)
+                enrichment = (k/n) / (K/N) if K > 0 else 0
                 results.append({
-                    'Pathway': name,
+                    'Pathway': pathway,
                     'Hits': k,
-                    'Enrichment': (k/n) / (K/N) if K > 0 else 0,
-                    'P-value': p_val,
-                    'Path_Coherence': p_coherence
+                    'Pathway_Size': K,
+                    'Enrichment': enrichment,
+                    'P-value': p_val
                 })
 
-        res_df = pd.DataFrame(results).sort_values('P-value')
+        res_df = pd.DataFrame(results)
+        if not res_df.empty:
+            res_df['FDR_adj_P'] = self.apply_fdr(res_df['P-value'].values)
+            return res_df.sort_values('P-value')
         return res_df
 
-    def _compute_internal_pathway_coherence(self, df, genes_in_pathway):
-        """Calculates λ₂ specifically for SNPs contributing to a pathway."""
-        relevant_snps = [k for k, v in self.snp_to_genes.items() if v['gene'] in genes_in_pathway]
-        path_df = df[df['SNP'].isin(relevant_snps)]
-        return self.compute_coherence(path_df)
+    def apply_fdr(self, p_values):
+        """Benjamini-Hochberg FDR correction."""
+        m = len(p_values)
+        sorted_indices = np.argsort(p_values)
+        sorted_p = p_values[sorted_indices]
+        fdr = np.zeros(m)
+        prev_fdr = 1.0
+        for i in range(m - 1, -1, -1):
+            rank = i + 1
+            current_fdr = (sorted_p[i] * m) / rank
+            current_fdr = min(current_fdr, prev_fdr)
+            fdr[i] = current_fdr
+            prev_fdr = current_fdr
+        final_fdr = np.zeros(m)
+        final_fdr[sorted_indices] = fdr
+        return final_fdr
 
-    # --- VISUALIZATION ---
-
-    def plot_phase_overlap_quadrant(self, df1, df2, output_file='user/phase_quadrant.png'):
-        """Polar plot showing phase alignment between two disorders."""
-        common = pd.merge(df1, df2, on='SNP', suffixes=('_A', '_B'))
-        if common.empty: return
-
-        # Calculate angular difference
-        delta_theta = common['theta_A'] - common['theta_B']
-        weights = common['weight_A'] * common['weight_B']
-
-        plt.figure(figsize=(8, 8))
-        ax = plt.subplot(111, projection='polar')
-
-        # Scatter plot of phase differences
-        ax.scatter(delta_theta, weights, alpha=0.5, c=delta_theta, cmap='hsv', s=20)
-        ax.set_title("Cross-Disorder Phase Overlap (Δθ)", va='bottom')
+    def visualize_enrichment(self, df, output_file='enrichment_plot.png'):
+        """Bubble plot for enrichment results."""
+        if df.empty: return
+        df_plot = df.head(15)
+        plt.figure(figsize=(10, 6))
+        sns.scatterplot(data=df_plot, x='Enrichment', y='Pathway',
+                        size='Hits', hue='FDR_adj_P',
+                        palette='viridis_r', sizes=(40, 400), alpha=0.7)
+        plt.title('Arkhe-PGC v3.0: Pathway Enrichment Analysis')
+        plt.tight_layout()
         plt.savefig(output_file, dpi=150)
         plt.close()
 
-    def plot_venn_shared_genes(self, df1_pruned, df2_pruned, output_file='user/gene_venn.png'):
-        """Plots simulated Venn overlap of mapped genes."""
-        g1 = {v['gene'] for k, v in self.map_functional_genes(df1_pruned).items()}
-        g2 = {v['gene'] for k, v in self.map_functional_genes(df2_pruned).items()}
+# --- REALISTIC SIMULATION ---
 
-        only_1 = len(g1 - g2)
-        only_2 = len(g2 - g1)
-        shared = len(g1 & g2)
-
-        plt.figure(figsize=(8, 5))
-        plt.bar(['Disorder A', 'Shared', 'Disorder B'], [only_1, shared, only_2], color=['blue', 'purple', 'red'])
-        plt.title("Functional Gene Overlap (eQTL Mapped)")
-        plt.ylabel("Number of Unique Genes")
-        plt.savefig(output_file, dpi=150)
-        plt.close()
-
-# --- ADVANCED SIMULATION ---
-
-def simulate_gwas_pair(n_snps=10000, overlap_fraction=0.3, seed=42):
-    """Simulates two GWAS datasets with a shared genetic architecture."""
+def simulate_realistic_gwas(n_snps=10000, seed=42):
     np.random.seed(seed)
     positions = np.sort(np.random.uniform(0, 100e6, n_snps))
-    snps = [f'rs{i}' for i in range(n_snps)]
+    beta = np.random.normal(0, 0.05, n_snps)
+    se = np.abs(np.random.normal(0.1, 0.02, n_snps)) + 0.05
 
-    def generate_df(is_shared):
-        beta = np.random.normal(0, 0.05, n_snps)
-        se = np.abs(np.random.normal(0.1, 0.02, n_snps)) + 0.05
-        # Add shared causal signals
-        shared_indices = np.random.choice(n_snps, int(n_snps * 0.05), replace=False)
-        for i in shared_indices:
-            beta[i] = np.random.uniform(0.4, 0.7)
-            se[i] = 0.02
-        z = beta / se
-        p = 2 * stats.norm.sf(np.abs(z))
-        return pd.DataFrame({'SNP': snps, 'CHR': 1, 'BP': positions.astype(int), 'BETA': beta, 'SE': se, 'P': p})
+    # Causal signals at specific "pathway" indices
+    # We'll make SNPs rs0 to rs100 belong to "Calcium_Signaling"
+    causal_indices = list(range(0, 100)) + list(range(1000, 1100))
+    for i in causal_indices:
+        beta[i] = np.random.choice([-1, 1]) * np.random.uniform(0.5, 0.8)
+        se[i] = np.random.uniform(0.01, 0.04)
 
-    return generate_df(True), generate_df(True)
+    z = beta / se
+    p = 2 * stats.norm.sf(np.abs(z))
+    return pd.DataFrame({
+        'SNP': [f'rs{i}' for i in range(n_snps)],
+        'CHR': 1,
+        'BP': positions.astype(int),
+        'BETA': beta,
+        'SE': se,
+        'P': p
+    })
