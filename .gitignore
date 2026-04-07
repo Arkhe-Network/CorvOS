@@ -1,0 +1,8 @@
+*.o
+corvos_kernel
+hello
+output.log
+*.png
+__pycache__/
+user/data/
+arkhe-pnt/bio_quantum_cathedral.py
