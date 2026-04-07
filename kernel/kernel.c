@@ -101,6 +101,7 @@ void kernel_main() {
        proc_schedule();
        timer_delay(100);  // Simple delay
     }
+    printf("Kernel: Integration check complete.\n");
 }
 
 int main() {

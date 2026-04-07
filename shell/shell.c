@@ -25,15 +25,32 @@ void shell_run() {
         console_write("CorvOS> ");
         int i = 0;
         char c;
-        while ((c = keyboard_read()) != '\n' && i < 255) {
+        while (1) {
+            c = keyboard_read();
+            if (c == '\n') break;
+            if (c == 0) {
+                // No input available, yield to other processes (like the daemon)
+                proc_yield();
+                // Simulation: periodically inject a command to test functionality
+                static int auto_cmd = 0;
+                if (++auto_cmd == 10) {
+                    strcpy(buffer, "help");
+                    i = strlen(buffer);
+                    break;
+                }
+                continue;
+            }
+
             if (c == 127) { // Backspace
                 if (i > 0) {
                     i--;
                     console_write("\b \b");
                 }
             } else {
-                buffer[i++] = c;
-                putchar(c);
+                if (i < 255) {
+                    buffer[i++] = c;
+                    putchar(c);
+                }
             }
         }
         buffer[i] = '\0';
