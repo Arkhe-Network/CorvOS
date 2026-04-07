@@ -12,9 +12,7 @@ void keyboard_init() {
 }
 
 char keyboard_read() {
-    // In a real environment we would check for input.
-    // For this simulation, we return 0 (no data) to avoid a tight loop of newlines.
-    return 0;
+    return '\n'; // Always return newline to avoid blocking in non-interactive mode
 }
 
 void keyboard_close() {
