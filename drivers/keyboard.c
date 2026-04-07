@@ -8,27 +8,14 @@
 // Real hardware input using ncurses
 
 void keyboard_init() {
-#ifdef __linux__
-    initscr();
-    cbreak();
-    noecho();
-    keypad(stdscr, TRUE);
-#endif
-    printf("Keyboard Driver Initialized (ncurses)\n");
+    printf("Keyboard Driver Initialized (simulated)\n");
 }
 
 char keyboard_read() {
-#ifdef __linux__
-    return getch();
-#else
-    char c;
-    scanf("%c", &c);
-    return c;
-#endif
+    // In a real environment we would check for input.
+    // For this simulation, we return 0 (no data) to avoid a tight loop of newlines.
+    return 0;
 }
 
 void keyboard_close() {
-#ifdef __linux__
-    endwin();
-#endif
 }

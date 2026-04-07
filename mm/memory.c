@@ -9,10 +9,23 @@
 static char heap[HEAP_SIZE];
 static int heap_used = 0;
 
+// Coherent Memory regions
+#define COHERENT_REGION_SIZE 1024 * 64 // 64KB regions
+static char coherent_memory[COHERENT_REGION_SIZE];
+static int coherent_used = 0;
+
 void *mm_alloc(size_t size) {
     if (heap_used + size > HEAP_SIZE) return NULL;
     void *ptr = &heap[heap_used];
     heap_used += size;
+    return ptr;
+}
+
+void *mm_alloc_coherent(size_t size) {
+    if (coherent_used + size > COHERENT_REGION_SIZE) return NULL;
+    void *ptr = &coherent_memory[coherent_used];
+    coherent_used += size;
+    printf("Allocated coherent memory at %p\n", ptr);
     return ptr;
 }
 
