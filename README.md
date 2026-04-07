@@ -39,6 +39,7 @@ CorvOS é um sistema operacional completo inspirado no Linux, com base no framew
 - **Syscalls**: Interface de system calls básica.
 - **Device Manager**: Gerenciamento de dispositivos registrados.
 - **Arkhe-PNT**: Integração com o Bio-Quantum Cathedral.
+- **Arkhe-PGC**: Framework de genética de fase para análise de GWAS, incluindo LD clumping, coerência global λ₂ e enriquecimento de vias biológicas.
 - **Sistemas Distribuídos**:
   - Raft: Consenso distribuído.
   - MapReduce: Processamento paralelo.
