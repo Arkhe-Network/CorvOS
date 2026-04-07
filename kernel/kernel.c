@@ -5,10 +5,12 @@
 #include "mapreduce.h"
 #include "bigtable.h"
 #include "spanner.h"
+#include "arkhe_chain.h"
 #include "console.h"
 #include "simplefs.h"
 #include "tcp.h"
 #include "arkhe.h"
+#include "arkhe_daemon.h"
 #include "memory.h"
 #include "process.h"
 #include "keyboard.h"
@@ -16,6 +18,8 @@
 #include "shell.h"
 #include "syscalls.h"
 #include "devices.h"
+#include "arkhe_drivers.h"
+#include "phi_pcie.h"
 
 // CorvOS Kernel Entry Point
 // Inspirado em Linux, com extensões para sistemas distribuídos baseados em Arkhe-PNT
@@ -33,6 +37,8 @@ void kernel_init() {
     timer_init();
     mouse_init();
     interrupts_init();
+    register_arkhe_drivers();
+    phi_pcie_init();
     device_init_all();
     // Register devices
     device_register("console", console_init, NULL, NULL);
@@ -40,6 +46,8 @@ void kernel_init() {
     fs_init();
     net_init();
     arkhe_init();
+    arkhe_daemon_init();
+    arkhe_chain_init();
     raft_init(&raft_node);
     bigtable_init(&bigtable);
     spanner_init(&spanner_db);
@@ -87,10 +95,11 @@ void kernel_main() {
     console_writeln(sval);
 
     // Loop principal do kernel
-    shell_run(); // Run shell
+    proc_create(shell_run, 1);
     while (1) {
-        proc_schedule();
-        timer_delay(100);  // Simple delay
+       arkhe_daemon_run();
+       proc_schedule();
+       timer_delay(100);  // Simple delay
     }
 }
 
