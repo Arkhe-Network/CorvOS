@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Arkhe-PGC v4.1: Production-Grade Phase Genetics Framework.
+Arkhe-PGC v4.2: Production-Grade Phase Genetics Framework.
 Integrates Pathway Coherence, Single-Cell eQTLs, and Transdiagnostic Overlap.
+Fixed naming inconsistencies and added statistical enrichment analysis.
 """
 
 import numpy as np
@@ -55,6 +56,40 @@ class PathwayCoherenceAnalyzer:
         df = pd.DataFrame(results).sort_values('lambda2_internal', ascending=False)
         self.pathway_coherence = df
         return df
+
+    def compute_pathway_enrichment(self, df_gwas: pd.DataFrame, snp_to_genes: Dict[str, List[str]], p_threshold: float = 5e-8) -> pd.DataFrame:
+        """
+        Calculates functional enrichment using a Hypergeometric test.
+        M: Total genes in the GWAS.
+        n: Significant genes in the GWAS.
+        N: Genes in the specific pathway.
+        k: Overlap (significant genes in the pathway).
+        """
+        # 1. Map all SNPs to genes
+        all_genes = set().union(*snp_to_genes.values())
+        sig_snps = df_gwas[df_gwas['P'] < p_threshold]['SNP'].tolist()
+        sig_genes = set().union(*[set(snp_to_genes.get(s, [])) for s in sig_snps])
+
+        M = len(all_genes)
+        n = len(sig_genes)
+
+        enrichment_results = []
+        for name, genes in self.pathways.items():
+            N = len(genes.intersection(all_genes))
+            k = len(genes.intersection(sig_genes))
+
+            # P-value = Pr(X >= k)
+            p_val = hypergeom.sf(k-1, M, n, N) if M > 0 and n > 0 and N > 0 else 1.0
+
+            enrichment_results.append({
+                'pathway': name,
+                'p_value': p_val,
+                'overlap': k,
+                'pathway_size': N,
+                'fold_enrichment': (k/n) / (N/M) if n > 0 and N > 0 and M > 0 else 0.0
+            })
+
+        return pd.DataFrame(enrichment_results).sort_values('p_value')
 
     def plot_coherence(self, output_file='user/pathway_coherence.png', top_n=15):
         if self.pathway_coherence.empty: return

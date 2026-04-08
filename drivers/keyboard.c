@@ -1,21 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
+#ifdef __linux__
+#include <ncurses.h>
+#endif
 
 // Keyboard Driver for CorvOS
-// Real hardware input using non-blocking read
+// Real hardware input using ncurses
 
 void keyboard_init() {
-    // Set stdin to non-blocking
-    int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
-    fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
-    printf("Keyboard Driver Initialized (Non-blocking STDIN)\n");
+    printf("Keyboard Driver Initialized (simulated)\n");
 }
 
 char keyboard_read() {
+    // Standard blocking read for interactivity
     char c;
-    if (read(STDIN_FILENO, &c, 1) == 1) return c;
+    if (scanf("%c", &c) == 1) return c;
     return 0;
 }
 

@@ -30,9 +30,7 @@ void shell_run() {
             c = keyboard_read();
             if (c == '\n') break;
             if (c == 0) {
-                // Yield to other processes (like the daemon) while waiting for input
                 proc_yield();
-                usleep(10000); // 10ms wait to reduce CPU usage in simulation
                 continue;
             }
 
@@ -85,6 +83,6 @@ void shell_run() {
             // Placeholder for VM
         }
         else if (strcmp(buffer, "help") == 0) console_writeln("Commands: ls, ps, mem, net, arkhe, urban-sync, meditate, chain-print, spawn-agent, bridge-formalize, fold, cad, fem, music, run, vm, help, exit");
-        else if (strlen(buffer) > 0) console_writeln("Unknown command");
+        else console_writeln("Unknown command");
     }
 }
