@@ -1,216 +1,185 @@
 #!/usr/bin/env python3
 """
-Arkhe-PGC v4.2: Production-Grade Phase Genetics Framework.
-Integrates Pathway Coherence, Single-Cell eQTLs, and Transdiagnostic Overlap.
-Fixed naming inconsistencies and added statistical enrichment analysis.
+Arkhe-PGC v3.0: Genetic Phase Coherence & Pathway Enrichment Analysis.
+Integrated module for LD clumping, IVW coherence, and biological function mapping.
 """
 
 import numpy as np
 import pandas as pd
-from scipy.stats import hypergeom, norm
-from collections import defaultdict
-from typing import Dict, List, Set, Tuple, Optional
+from scipy import stats
 import matplotlib.pyplot as plt
 import seaborn as sns
-from matplotlib_venn import venn2
+import requests
+import time
 import os
 import warnings
 
 warnings.filterwarnings('ignore')
 
-class PathwayCoherenceAnalyzer:
-    """Calculates internal λ₂ for functional biological pathways."""
-    def __init__(self, pathways: Dict[str, Set[str]]):
-        self.pathways = pathways
-        self.pathway_coherence = pd.DataFrame()
-
-    def calculate_pathway_coherence(self, df_gwas: pd.DataFrame, snp_to_genes: Dict[str, List[str]], min_snps: int = 3) -> pd.DataFrame:
-        results = []
-        # Pre-calculate phase and weight if not present
-        if 'weight' not in df_gwas.columns:
-            df_gwas['weight'] = 1.0 / (df_gwas['SE'].values**2 + 1e-10)
-        if 'phase' not in df_gwas.columns:
-            df_gwas['phase'] = np.arctan2(df_gwas['BETA'].values, 1.0)
-
-        for name, genes in self.pathways.items():
-            pathway_snps = [snp for snp, g_list in snp_to_genes.items() if any(g in genes for g in g_list)]
-            df_sub = df_gwas[df_gwas['SNP'].isin(pathway_snps)]
-
-            if len(df_sub) >= min_snps:
-                w = df_sub['weight'].values
-                p = df_sub['phase'].values
-                complex_vecs = np.exp(1j * p)
-                lambda_p = np.abs(np.sum(w * complex_vecs)) / np.sum(w)
-
-                results.append({
-                    'pathway': name,
-                    'lambda2_internal': lambda_p,
-                    'n_snps': len(df_sub),
-                    'n_genes': len(genes.intersection(set().union(*[set(snp_to_genes[s]) for s in pathway_snps if s in snp_to_genes])))
-                })
-
-        if not results:
-            self.pathway_coherence = pd.DataFrame(columns=['pathway', 'lambda2_internal', 'n_snps', 'n_genes'])
-            return self.pathway_coherence
-
-        df = pd.DataFrame(results).sort_values('lambda2_internal', ascending=False)
-        self.pathway_coherence = df
-        return df
-
-    def compute_pathway_enrichment(self, df_gwas: pd.DataFrame, snp_to_genes: Dict[str, List[str]], p_threshold: float = 5e-8) -> pd.DataFrame:
-        """
-        Calculates functional enrichment using a Hypergeometric test.
-        M: Total genes in the GWAS.
-        n: Significant genes in the GWAS.
-        N: Genes in the specific pathway.
-        k: Overlap (significant genes in the pathway).
-        """
-        # 1. Map all SNPs to genes
-        all_genes = set().union(*snp_to_genes.values())
-        sig_snps = df_gwas[df_gwas['P'] < p_threshold]['SNP'].tolist()
-        sig_genes = set().union(*[set(snp_to_genes.get(s, [])) for s in sig_snps])
-
-        M = len(all_genes)
-        n = len(sig_genes)
-
-        enrichment_results = []
-        for name, genes in self.pathways.items():
-            N = len(genes.intersection(all_genes))
-            k = len(genes.intersection(sig_genes))
-
-            # P-value = Pr(X >= k)
-            p_val = hypergeom.sf(k-1, M, n, N) if M > 0 and n > 0 and N > 0 else 1.0
-
-            enrichment_results.append({
-                'pathway': name,
-                'p_value': p_val,
-                'overlap': k,
-                'pathway_size': N,
-                'fold_enrichment': (k/n) / (N/M) if n > 0 and N > 0 and M > 0 else 0.0
-            })
-
-        return pd.DataFrame(enrichment_results).sort_values('p_value')
-
-    def plot_coherence(self, output_file='user/pathway_coherence.png', top_n=15):
-        if self.pathway_coherence.empty: return
-        df = self.pathway_coherence.head(top_n).copy().iloc[::-1]
-        plt.figure(figsize=(10, 8))
-        colors = ['#27ae60' if x > 0.5 else '#f39c12' if x > 0.3 else '#e74c3c' for x in df['lambda2_internal']]
-        plt.barh(df['pathway'], df['lambda2_internal'], color=colors, edgecolor='black')
-        plt.axvline(x=0.5, color='green', linestyle='--', alpha=0.5)
-        plt.xlabel('Internal Phase Coherence (λ₂)')
-        plt.title('Top Pathways by Phase Stability')
-        plt.tight_layout()
-        plt.savefig(output_file, dpi=150)
-        plt.close()
-
-class SingleCellEqtlMapper:
-    """Mapeia SNPs para genes usando dados eQTL (Bulk ou Single-Cell)."""
-    def __init__(self):
-        self.mapping = {}
-
-    def load_eqtl(self, filepath: str):
-        """Loads eQTL data: SNP, GENE, (optional) CELL_TYPE."""
-        df = pd.read_csv(filepath, sep='\t')
-        df.columns = [c.upper() for c in df.columns]
-        # Store as Dict {SNP: [GENES]}
-        self.mapping = df.groupby('SNP')['GENE'].apply(list).to_dict()
-        return self.mapping
-
-    def simulate_mapping(self, snps, cell_type='Neuron'):
-        # Mock mapping for simulation
-        for snp in snps:
-            self.mapping[snp] = [f"SC_{cell_type.upper()}_GENE_{snp.replace('rs', '')}"]
-        return self.mapping
-
-class CrossDisorderAnalyzer:
-    """Analyzes overlap and phase alignment between disorders."""
-    def compute_gene_phase_angle(self, gene, snp_to_gene1, snp_to_gene2, df1, df2):
-        snps1 = [s for s, g_list in snp_to_gene1.items() if gene in g_list]
-        snps2 = [s for s, g_list in snp_to_gene2.items() if gene in g_list]
-        common = set(snps1).intersection(set(snps2))
-        if not common: return np.nan
-
-        diff_angles = []
-        for snp in common:
-            t1 = np.arctan2(df1[df1['SNP'] == snp]['BETA'].values[0], 1.0)
-            t2 = np.arctan2(df2[df2['SNP'] == snp]['BETA'].values[0], 1.0)
-            diff = np.angle(np.exp(1j * t1) * np.conj(np.exp(1j * t2)))
-            diff_angles.append(np.degrees(diff))
-        return np.mean(diff_angles)
-
-    def plot_venn_with_phase(self, set1, set2, gene_phase_angles, title="Overlap", output="user/venn_phase.png"):
-        plt.figure(figsize=(8, 8))
-        v = venn2([set1, set2], set_labels=('Disorder A', 'Disorder B'))
-        if len(gene_phase_angles) > 0:
-            avg_angle = np.nanmean(list(gene_phase_angles.values()))
-            norm_angle = np.abs(avg_angle) / 180.0
-            cmap = plt.cm.RdYlGn_r
-            color = cmap(norm_angle)
-            if v.get_patch_by_id('11'):
-                v.get_patch_by_id('11').set_color(color)
-                v.get_patch_by_id('11').set_alpha(0.7)
-        plt.title(title)
-        plt.savefig(output, dpi=150)
-        plt.close()
-
 class ArkhePGC:
     def __init__(self, window_size_bp=250000):
         self.window_size = window_size_bp
+        self.snp_to_genes = {}
+        self.pathway_genes = {}
 
-    def calculate_metrics(self, df):
-        df['weight'] = 1.0 / (df['SE'] ** 2 + 1e-10)
-        df['phase'] = np.arctan2(df['BETA'], 1.0)
-        df['complex_vec'] = np.exp(1j * df['phase'])
+    # --- PHASE & COHERENCE ---
+
+    def calculate_metrics(self, df, use_ivw=True):
+        """
+        Calculates weights and complex phases using quadrant-aware mapping.
+        """
+        if use_ivw and 'SE' in df.columns:
+            df['weight'] = 1.0 / (df['SE'] ** 2 + 1e-10)
+        else:
+            df['weight'] = -np.log10(np.clip(df['P'], 1e-300, 1))
+
+        # Scaling for robust phase calculation
+        b_val = df['BETA'].values
+        w_val = df['weight'].values
+        b_scale = np.std(b_val) if np.std(b_val) > 0 else 1.0
+        w_scale = np.std(w_val) if np.std(w_val) > 0 else 1.0
+
+        df['theta'] = np.angle((b_val / b_scale) + 1j * (w_val / w_scale))
+        df['complex_vec'] = np.exp(1j * df['theta'])
         return df
 
-    def ld_clumping(self, df):
-        if df.empty: return df
-        df = df.sort_values(by=['CHR', 'weight'], ascending=[True, False])
-        pruned = []
-        for chrom in df['CHR'].unique():
-            chrom_df = df[df['CHR'] == chrom].copy()
-            while not chrom_df.empty:
-                lead = chrom_df.iloc[0]
-                pruned.append(lead)
-                mask = (chrom_df['BP'] >= lead['BP'] - self.window_size) & \
-                       (chrom_df['BP'] <= lead['BP'] + self.window_size)
-                chrom_df = chrom_df[~mask]
-        return pd.DataFrame(pruned)
-
     def compute_coherence(self, df):
+        """Weighted Kuramoto Parameter λ₂."""
         if df.empty: return 0.0
         w = df['weight'].values
         z = df['complex_vec'].values
         return np.abs(np.sum(w * z)) / np.sum(w)
 
+    # --- LD PRUNING (CLUMPING) ---
+
+    def ld_clumping(self, df):
+        """Physical Clumping to reduce LD inflation."""
+        if df.empty: return df
+        df = df.sort_values(by=['CHR', 'weight'], ascending=[True, False])
+        pruned_list = []
+        for chrom in df['CHR'].unique():
+            chrom_df = df[df['CHR'] == chrom].copy()
+            while not chrom_df.empty:
+                lead_snp = chrom_df.iloc[0]
+                pruned_list.append(lead_snp)
+                mask = (chrom_df['BP'] >= lead_snp['BP'] - self.window_size) & \
+                       (chrom_df['BP'] <= lead_snp['BP'] + self.window_size)
+                chrom_df = chrom_df[~mask]
+        return pd.DataFrame(pruned_list)
+
+    # --- PATHWAY ENRICHMENT ---
+
+    def fetch_online_annotations(self, snps, batch_size=200):
+        """Fetches Ensembl annotations (simulated/mocked for demo)."""
+        # In a real scenario, this would call Ensembl REST API.
+        # For the demonstration, we'll map SNPs to mock gene IDs.
+        for snp in snps:
+            self.snp_to_genes[snp] = f"GENE_{snp.replace('rs', '')}"
+        return self.snp_to_genes
+
+    def load_gene_sets(self, mock=True):
+        """Loads GMT gene sets (mocked for demo)."""
+        if mock:
+            self.pathway_genes = {
+                "Calcium_Signaling": {f"GENE_{i}" for i in range(100)},
+                "Glutamatergic_Synapse": {f"GENE_{i}" for i in range(50, 150)},
+                "Dopaminergic_Synapse": {f"GENE_{i}" for i in range(150, 250)},
+                "Neuroactive_Ligand_Receptor": {f"GENE_{i}" for i in range(250, 400)}
+            }
+        return self.pathway_genes
+
+    def analyze_enrichment(self, df_pruned, min_size=5, max_size=500):
+        """Hypergeometric test for pathway over-representation."""
+        # 1. Map SNPs to Genes
+        snp_genes = []
+        for snp in df_pruned['SNP']:
+            if snp in self.snp_to_genes:
+                snp_genes.append(self.snp_to_genes[snp])
+
+        gene_set = set(snp_genes)
+        if not gene_set: return pd.DataFrame()
+
+        # 2. Background: all genes in any pathway
+        background_genes = set()
+        for genes in self.pathway_genes.values():
+            background_genes.update(genes)
+
+        results = []
+        N = len(background_genes)
+        n = len(gene_set.intersection(background_genes))
+
+        for pathway, p_genes in self.pathway_genes.items():
+            if len(p_genes) < min_size or len(p_genes) > max_size: continue
+
+            overlap = gene_set.intersection(p_genes)
+            k = len(overlap)
+            K = len(p_genes.intersection(background_genes))
+
+            if k > 0:
+                p_val = stats.hypergeom.sf(k - 1, N, K, n)
+                enrichment = (k/n) / (K/N) if K > 0 else 0
+                results.append({
+                    'Pathway': pathway,
+                    'Hits': k,
+                    'Pathway_Size': K,
+                    'Enrichment': enrichment,
+                    'P-value': p_val
+                })
+
+        res_df = pd.DataFrame(results)
+        if not res_df.empty:
+            res_df['FDR_adj_P'] = self.apply_fdr(res_df['P-value'].values)
+            return res_df.sort_values('P-value')
+        return res_df
+
+    def apply_fdr(self, p_values):
+        """Benjamini-Hochberg FDR correction."""
+        m = len(p_values)
+        sorted_indices = np.argsort(p_values)
+        sorted_p = p_values[sorted_indices]
+        fdr = np.zeros(m)
+        prev_fdr = 1.0
+        for i in range(m - 1, -1, -1):
+            rank = i + 1
+            current_fdr = (sorted_p[i] * m) / rank
+            current_fdr = min(current_fdr, prev_fdr)
+            fdr[i] = current_fdr
+            prev_fdr = current_fdr
+        final_fdr = np.zeros(m)
+        final_fdr[sorted_indices] = fdr
+        return final_fdr
+
+    def visualize_enrichment(self, df, output_file='enrichment_plot.png'):
+        """Bubble plot for enrichment results."""
+        if df.empty: return
+        df_plot = df.head(15)
+        plt.figure(figsize=(10, 6))
+        sns.scatterplot(data=df_plot, x='Enrichment', y='Pathway',
+                        size='Hits', hue='FDR_adj_P',
+                        palette='viridis_r', sizes=(40, 400), alpha=0.7)
+        plt.title('Arkhe-PGC v3.0: Pathway Enrichment Analysis')
+        plt.tight_layout()
+        plt.savefig(output_file, dpi=150)
+        plt.close()
+
+# --- REALISTIC SIMULATION ---
+
 def simulate_realistic_gwas(n_snps=10000, seed=42):
-    """
-    Generates GWAS data where λ₂ reduction and enrichment are observable.
-    """
     np.random.seed(seed)
     positions = np.sort(np.random.uniform(0, 100e6, n_snps))
+    beta = np.random.normal(0, 0.05, n_snps)
+    se = np.abs(np.random.normal(0.1, 0.02, n_snps)) + 0.05
 
-    # Background noise
-    beta = np.random.normal(0, 0.1, n_snps)
-    se = np.abs(np.random.normal(0.2, 0.05, n_snps)) + 0.05
-
-    # Causal blocks (LD)
-    n_causal_loci = 25
-    causal_idx = np.random.choice(n_snps, n_causal_loci, replace=False)
-
-    for i in causal_idx:
-        # High effect for causal SNP
-        effect = np.random.choice([-1, 1]) * np.random.uniform(0.5, 1.0)
-        # LD Window
-        nearby = (positions >= positions[i] - 200000) & (positions <= positions[i] + 200000)
-        beta[nearby] = effect + np.random.normal(0, 0.05, np.sum(nearby))
-        se[nearby] = np.random.uniform(0.02, 0.05, np.sum(nearby))
+    # Causal signals at specific "pathway" indices
+    # We'll make SNPs rs0 to rs100 belong to "Calcium_Signaling"
+    causal_indices = list(range(0, 100)) + list(range(1000, 1100))
+    for i in causal_indices:
+        beta[i] = np.random.choice([-1, 1]) * np.random.uniform(0.5, 0.8)
+        se[i] = np.random.uniform(0.01, 0.04)
 
     z = beta / se
-    p = 2 * norm.sf(np.abs(z))
-
-    df = pd.DataFrame({
+    p = 2 * stats.norm.sf(np.abs(z))
+    return pd.DataFrame({
         'SNP': [f'rs{i}' for i in range(n_snps)],
         'CHR': 1,
         'BP': positions.astype(int),
@@ -218,4 +187,3 @@ def simulate_realistic_gwas(n_snps=10000, seed=42):
         'SE': se,
         'P': p
     })
-    return df

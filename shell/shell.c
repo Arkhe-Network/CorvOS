@@ -5,7 +5,6 @@
 #include "../include/console.h"
 #include "../include/arkhe_daemon.h"
 #include "../include/process.h"
-#include <unistd.h>
 #include "../include/arkhe_chain.h"
 
 // Prototypes for Arkhe apps (simulating separate executables in user space)
@@ -30,7 +29,15 @@ void shell_run() {
             c = keyboard_read();
             if (c == '\n') break;
             if (c == 0) {
+                // No input available, yield to other processes (like the daemon)
                 proc_yield();
+                // Simulation: periodically inject a command to test functionality
+                static int auto_cmd = 0;
+                if (++auto_cmd == 10) {
+                    strcpy(buffer, "help");
+                    i = strlen(buffer);
+                    break;
+                }
                 continue;
             }
 

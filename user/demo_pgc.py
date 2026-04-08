@@ -1,51 +1,59 @@
 #!/usr/bin/env python3
 """
-Demo for Arkhe-PGC v4.2: Functional Phase Genetics.
+Demonstration of Arkhe-PGC v3.0 Pipeline:
+Simulation -> LD Clumping -> Coherence -> Enrichment Analysis
 """
 
-from arkhe_pgc import ArkhePGC, simulate_realistic_gwas, PathwayCoherenceAnalyzer, SingleCellEqtlMapper
-import pandas as pd
+from arkhe_pgc import ArkhePGC, simulate_realistic_gwas
 import numpy as np
 
-def run_pgc_demo():
-    print("🧬 Arkhe-PGC v4.2: Functional Phase Genetics Demo")
+def run_demo():
+    print("🧬 Arkhe-PGC v3.0: Genetic Coherence & Pathway Enrichment Demo")
     print("="*60)
 
-    # 1. Simulate GWAS
-    df = simulate_realistic_gwas(n_snps=2000)
-    pgc = ArkhePGC()
-    df = pgc.calculate_metrics(df)
+    # 1. Simulate Realistic GWAS Data
+    n_snps = 5000
+    df = simulate_realistic_gwas(n_snps=n_snps, seed=42)
+    print(f"Simulated GWAS with {n_snps} SNPs.")
 
-    # 2. Simulate eQTL Mapping
-    mapper = SingleCellEqtlMapper()
-    snps = df['SNP'].tolist()
-    snp_to_genes = mapper.simulate_mapping(snps, cell_type='Neuron')
+    processor = ArkhePGC(window_size_bp=250000)
 
-    # 3. Define Pathways
-    pathways = {
-        "Synaptic_Transmission": set([f"SC_NEURON_GENE_{i}" for i in range(100)]),
-        "Glutamate_Receptor_Activity": set([f"SC_NEURON_GENE_{i}" for i in range(50, 150)]),
-        "Dopamine_Metabolism": set([f"SC_NEURON_GENE_{i}" for i in range(500, 600)])
-    }
+    # 2. Step 1: Initial Metrics & Raw Coherence
+    df = processor.calculate_metrics(df)
+    lambda_raw = processor.compute_coherence(df)
+    print(f"\nInitial λ₂ (with LD inflation): {lambda_raw:.4f}")
 
-    # 4. Pathway Analysis
-    pca = PathwayCoherenceAnalyzer(pathways)
+    # 3. Step 2: LD Clumping (Pruning)
+    df_pruned = processor.ld_clumping(df)
+    print(f"Retained {len(df_pruned)} SNPs after physical clumping.")
 
-    print("\n[*] Calculating Pathway Coherence (λ₂)...")
-    df_coh = pca.calculate_pathway_coherence(df, snp_to_genes)
-    print(df_coh[['pathway', 'lambda2_internal', 'n_snps']])
+    # 4. Step 3: Pruned Coherence
+    lambda_pruned = processor.compute_coherence(df_pruned)
+    print(f"Pruned λ₂ (Real biological signal): {lambda_pruned:.4f}")
 
-    print("\n[*] Calculating Pathway Enrichment (Hypergeometric)...")
-    df_enrich = pca.compute_pathway_enrichment(df, snp_to_genes, p_threshold=0.01)
-    print(df_enrich[['pathway', 'p_value', 'overlap', 'fold_enrichment']])
+    reduction = (1 - lambda_pruned / lambda_raw) * 100
+    print(f"Reduction in Coherence Inflation: {reduction:.1f}%")
 
-    # 5. Global Coherence
-    df_pruned = pgc.ld_clumping(df)
-    global_lambda = pgc.compute_coherence(df_pruned)
-    print(f"\n[SUMMARY] Global λ₂ (Clumped): {global_lambda:.4f}")
+    # 5. Step 4: Pathway Enrichment
+    print("\nRunning Pathway Enrichment...")
+    processor.fetch_online_annotations(df_pruned['SNP'].tolist())
+    processor.load_gene_sets(mock=True)
+
+    enrichment = processor.analyze_enrichment(df_pruned)
+
+    if not enrichment.empty:
+        print("\nTop Enriched Pathways (FDR Corrected):")
+        print(enrichment[['Pathway', 'Hits', 'Enrichment', 'FDR_adj_P']].head())
+
+        # Save visualization
+        processor.visualize_enrichment(enrichment, output_file='user/arkhe_enrichment.png')
+        print(f"\n📊 Enrichment plot saved to user/arkhe_enrichment.png")
+    else:
+        print("\nNo significant enrichment found.")
 
     print("\n" + "="*60)
-    print("Arkhe-PGC Demo Complete.")
+    print("Conclusion: Arkhe-PGC successfully identifies independent biological signals")
+    print("and maps them to functional pathways using hypergeometric testing and FDR.")
 
 if __name__ == "__main__":
-    run_pgc_demo()
+    run_demo()

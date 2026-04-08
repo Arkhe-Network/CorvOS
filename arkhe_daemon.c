@@ -5,7 +5,6 @@
 #include "arkhe_daemon.h"
 
 static float global_lambda_2 = 0.99f;
-static float coupling_k = 0.618f;
 static int urban_sync_active = 0;
 static int meditation_mode = 0;
 static int januslock_sealed = 0;
@@ -13,24 +12,15 @@ static int januslock_sealed = 0;
 void arkhe_daemon_init() {
     printf("Arkhe Daemon: Coherence Engine, Tzinor Manager, and Sensor Hub Initializing...\n");
     global_lambda_2 = 0.99f;
-    coupling_k = 0.618f;
 }
 
 void arkhe_daemon_run() {
     static int meditation_counter = 0;
-
-    // SBM-Inspired Edge of Chaos Control (Simulated)
-    // Adjust coupling_k to stay near lambda_target = 0.95
-    float target = 0.95f;
-    float error = global_lambda_2 - target;
-    coupling_k -= 0.01f * error; // Simplified adaptation
-    if (coupling_k < 0.3f) coupling_k = 0.3f;
-    if (coupling_k > 1.2f) coupling_k = 1.2f;
-
+    // Simulate coherence auto-optimization
     if (meditation_mode) {
         global_lambda_2 = 0.999f;
         meditation_counter++;
-        printf("Arkhe Daemon: Meditation Mode Active (λ₂ = 0.999, K = %.3f) - Session: %ds\n", coupling_k, meditation_counter);
+        printf("Arkhe Daemon: Meditation Mode Active (λ₂ = 0.999) - Session: %ds\n", meditation_counter);
 
         if (meditation_counter >= 10 && !januslock_sealed) {
             januslock_sealed = 1;
@@ -39,15 +29,14 @@ void arkhe_daemon_run() {
         }
     } else {
         meditation_counter = 0;
-
-        // Coherence naturally fluctuates
-        global_lambda_2 += ((float)(rand() % 20) - 10.0f) / 1000.0f;
-        if (global_lambda_2 > 1.0f) global_lambda_2 = 1.0f;
+        if (global_lambda_2 < 0.95f) {
+            global_lambda_2 += 0.01f;
+        }
 
         if (urban_sync_active) {
-            printf("Arkhe Daemon: Urban Sync Active (Region: Rio, λ₂: %.3f, K: %.3f)\n", global_lambda_2, coupling_k);
+            printf("Arkhe Daemon: Urban Sync Active (Region: Rio, λ₂: %.3f)\n", global_lambda_2);
         } else {
-            printf("Arkhe Daemon: SBM Optimization (λ₂: %.3f, K: %.3f)\n", global_lambda_2, coupling_k);
+            printf("Arkhe Daemon: Optimizing lambda_2... (Current: %.3f)\n", global_lambda_2);
         }
     }
 }
@@ -64,8 +53,4 @@ void arkhe_daemon_command(const char *cmd) {
 
 float arkhe_get_global_coherence() {
     return global_lambda_2;
-}
-
-float arkhe_get_coupling_k() {
-    return coupling_k;
 }
