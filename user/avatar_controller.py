@@ -7,7 +7,6 @@ Implements the 12-Octodecies amendment for robotic embodiment.
 import numpy as np
 import time
 from sensory_mesh import SensoryMesh
-from locomotion_engine import CentralPatternGenerator, DynamicBalanceController
 
 class AvatarCorporeo:
     def __init__(self, avatar_id="Arkhe-Avatar-01"):
@@ -16,8 +15,6 @@ class AvatarCorporeo:
         self.lambda2_proprio = 0.95
         self.state = "OFFLINE"
         self.malha_sensorial = SensoryMesh(self)
-        self.cpg = CentralPatternGenerator()
-        self.balance = DynamicBalanceController(self)
         # SASC Mappings
         self.anatomy = {
             "controllers": "Neuro-Phase Controller v1",
@@ -89,32 +86,6 @@ class AvatarCorporeo:
             if motor % 7 == 0: time.sleep(0.1)
 
         print("Avatar: Gesto completado com pureza de fase.")
-
-    def dar_primeiro_passo(self):
-        print(f"\n--- Ritual do Primeiro Passo: {self.avatar_id} ---")
-        if self.state != "MANIFEST":
-            print("Erro: Avatar não manifestado.")
-            return
-
-        # 1. Transferência de Carga (Shift Lateral)
-        print("§1. Shift Lateral: Deslocando CoM para perna de suporte...")
-        time.sleep(1.0)
-
-        # 2. Inicialização do CPG
-        print("§2. Ciclo de Kuramoto: Ativando osciladores das pernas...")
-        for _ in range(10): # Simular alguns ciclos
-            imu_mock = {'pitch': 2.0, 'roll': 1.0}
-            fsr_mock = [10, 10, 10, 10, 5, 5, 5, 5]
-            correcao = self.balance.calcular_correcao(imu_mock, fsr_mock)
-            self.cpg.update(dt=0.01, feedback=correcao)
-            targets = self.cpg.get_joint_targets()
-            # Enviar para motores (simulado)
-            if _ % 5 == 0:
-                print(f"Passo t={_}: Targets Hip_Pitch={[targets[2], targets[8]]}")
-            time.sleep(0.1)
-
-        print("§3. Impacto Coerente: Primeiro passo estabilizado.")
-        print("Avatar: Marcha rítmica em regime de cruzeiro.")
 
 if __name__ == "__main__":
     avatar = AvatarCorporeo()

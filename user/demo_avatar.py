@@ -18,9 +18,6 @@ def main():
     # The First Gesture
     avatar.primeiro_gesto()
 
-    # The First Step (Locomotion)
-    avatar.dar_primeiro_passo()
-
     # Demonstrate Sensory-Guided Logic
     print("\n--- Demonstração de Resposta Sensorial ---")
     l2_composto = avatar.malha_sensorial.lambda2_composto
