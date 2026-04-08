@@ -80,10 +80,6 @@ void shell_run() {
         else if (strcmp(buffer, "fem") == 0) arkhe_fem();
         else if (strcmp(buffer, "music") == 0) arkhe_music();
         else if (strcmp(buffer, "calc") == 0) arkhe_calc();
-        else if (strcmp(buffer, "avatar") == 0) {
-            console_writeln("Avatar: Initiating corporeal manifestation...");
-            system("python3 user/demo_avatar.py");
-        }
         else if (strcmp(buffer, "spawn-agent") == 0) rio_agent_01_run();
         else if (strcmp(buffer, "bridge-formalize") == 0) atelier_bridge_formalize_agent("Rio-Agent-01", "SOUL.md", "DREAMS.md");
         else if (strcmp(buffer, "meditate") == 0) {
@@ -95,7 +91,7 @@ void shell_run() {
             console_writeln("VM: Running simple program");
             // Placeholder for VM
         }
-        else if (strcmp(buffer, "help") == 0) console_writeln("Commands: ls, ps, mem, net, arkhe, urban-sync, meditate, chain-print, spawn-agent, bridge-formalize, fold, cad, fem, music, calc, avatar, run, vm, help, exit");
+        else if (strcmp(buffer, "help") == 0) console_writeln("Commands: ls, ps, mem, net, arkhe, urban-sync, meditate, chain-print, spawn-agent, bridge-formalize, fold, cad, fem, music, calc, run, vm, help, exit");
         else console_writeln("Unknown command");
     }
 }
