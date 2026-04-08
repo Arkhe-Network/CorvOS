@@ -31,3 +31,13 @@ void arkhe_music() {
     printf("Arkhe-Music: Composing quasiperiodic Fibonacci rhythms...\n");
     printf("Arkhe-Music: 🌌🔁 Harmony synchronized with Tzinorot.\n");
 }
+
+void arkhe_calc() {
+    printf("Arkhe-Calc: Performing phase-coherent arithmetic...\n");
+    // Code: READ LAMBDA, SYNC, ADD PHASES, PROJECT RESULT
+    uint8_t code[] = {VM_LAMBDA_READ, VM_SYNC, VM_PHASE_ADD, VM_PROJ, VM_HALT};
+    PhaseVM vm;
+    vm_init(&vm);
+    vm_execute(&vm, code);
+    printf("Arkhe-Calc: Calculation result stabilized via phase-collapse.\n");
+}

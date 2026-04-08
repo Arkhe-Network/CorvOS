@@ -88,13 +88,14 @@ void vm_execute(PhaseVM *vm, uint8_t *bytecode) {
                 vm->pc++;
                 break;
             case VM_PHASE_ADD:
-                vm->phase_regs[0] += vm->phase_regs[1];
-                printf("PhaseVM: PHASE_ADD - Phase registers summed\n");
+                vm->phase_regs[0] = vm->phase_regs[0] + vm->phase_regs[1];
+                // In phase-coherent logic, addition can be seen as interference
+                printf("PhaseVM: PHASE_ADD - Phase interference: |ψ| = %.3f\n", cabsf(vm->phase_regs[0]));
                 vm->pc++;
                 break;
             case VM_PHASE_MUL:
-                vm->phase_regs[0] *= vm->phase_regs[1];
-                printf("PhaseVM: PHASE_MUL - Phase registers multiplied\n");
+                vm->phase_regs[0] = vm->phase_regs[0] * vm->phase_regs[1];
+                printf("PhaseVM: PHASE_MUL - Phase rotation applied.\n");
                 vm->pc++;
                 break;
             default:
