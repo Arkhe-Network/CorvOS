@@ -3,3 +3,6 @@ corvos_kernel
 hello
 output.log
 arkhe-pnt/bio_quantum_cathedral.py
+__pycache__/
+venv/
+user/projects/
