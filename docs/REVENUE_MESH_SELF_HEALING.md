@@ -31,17 +31,5 @@ Capacidade de gerar e compreender conteúdo em múltiplos formatos (Texto, Image
 - **H2.2:** Lançamento de APIs de ecossistema para parceiros.
 - **H2.3:** Personalização ubíqua em todas as plataformas (Web, App, XR).
 
-## 5. Agentic Web & Economy
-Sociedade digital de agentes autônomos que negociam e criam valor.
-
-### Protocolos:
-- **Kappa-Net (φ-MSG):** Comunicação baseada em intenções semânticas.
-- **Descoberta Semântica:** Uso do Weaviate para encontrar agentes por capacidades.
-
-### Economia da Arkhe-Block:
-- **Vector Reputation Oracle (VRO):** Avaliação de qualidade via similaridade de cosseno entre intenção e resultado.
-- **Cascade Monetization:** Distribuição automática de receita entre criadores humanos e agentes colaboradores.
-- **Slashing:** Penalidades econômicas para agentes que entregam alucinações ou baixa coerência.
-
 ---
-**Status:** IMPLEMENTADO_SIMULACAO | **Timestamp:** 2026-04-10
+**Status:** IMPLEMENTADO_SIMULACAO | **Timestamp:** 2026-04-09

@@ -20,7 +20,6 @@ typedef struct {
 void vector_db_init();
 void vector_db_add_asset(const char *id, AssetType type, const char *metadata);
 void vector_db_search(const float *query_vector, int limit);
-void vector_db_hybrid_search(const char *keyword, const float *query_vector, float alpha, int limit);
 void vector_db_cross_modal_query(const char *description);
 
 #endif
