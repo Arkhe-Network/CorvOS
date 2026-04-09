@@ -16,6 +16,8 @@ typedef enum {
     VM_LAMBDA_READ    = 0x08, // LAMBDA_READ – lê o valor atual de λ₂
     VM_PHASE_ADD      = 0x09, // PHASE_ADD – adição complexa de fases
     VM_PHASE_MUL      = 0x0A, // PHASE_MUL – multiplicação complexa de fases
+    VM_EM_HEAVISIDE   = 0x0B, // EM_HEAVISIDE – Forward EM prediction (Characterization)
+    VM_EM_MARCONI     = 0x0C, // EM_MARCONI – Inverse EM design (Synthesis)
     VM_HALT           = 0x00
 } VMInstruction;
 

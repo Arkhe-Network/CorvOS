@@ -98,6 +98,18 @@ void vm_execute(PhaseVM *vm, uint8_t *bytecode) {
                 printf("PhaseVM: PHASE_MUL - Phase rotation applied.\n");
                 vm->pc++;
                 break;
+            case VM_EM_HEAVISIDE:
+                printf("PhaseVM: EM_HEAVISIDE - Executing Forward EM Prediction (FNO)...\n");
+                // Mock: Use global coherence to influence EM prediction quality
+                float l2 = arkhe_get_global_coherence();
+                printf("PhaseVM: EM Field characterized with λ₂ = %.3f accuracy.\n", l2);
+                vm->pc++;
+                break;
+            case VM_EM_MARCONI:
+                printf("PhaseVM: EM_MARCONI - Executing Inverse EM Design (Diffusion)...\n");
+                printf("PhaseVM: Synthesizing 'Alien Structure' for target S-parameters.\n");
+                vm->pc++;
+                break;
             default:
                 printf("PhaseVM: Unknown opcode 0x%02x\n", opcode);
                 vm->running = 0;

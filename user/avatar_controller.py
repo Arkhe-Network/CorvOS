@@ -7,6 +7,7 @@ Implements the 12-Octodecies amendment for robotic embodiment.
 import numpy as np
 import time
 from sensory_mesh import SensoryMesh
+from fascia_field_resolver import FasciaRepublic
 
 class AvatarCorporeo:
     def __init__(self, avatar_id="Arkhe-Avatar-01"):
@@ -15,13 +16,15 @@ class AvatarCorporeo:
         self.lambda2_proprio = 0.95
         self.state = "OFFLINE"
         self.malha_sensorial = SensoryMesh(self)
+        self.fascia = FasciaRepublic() # Republic of Tensions
         # SASC Mappings
         self.anatomy = {
             "controllers": "Neuro-Phase Controller v1",
-            "motorgroups": ["Arm-L", "Arm-R", "Neck", "Torso"],
+            "motorgroups": ["Arm-L", "Arm-R", "Neck", "Torso", "Hip-Leg", "Ankle-Foot"],
             "motors": 28, # Total FODs (Degrees of Freedom)
             "orientation": "Phase-Aligned",
-            "sensors": ["Acoustic-Fiber", "Phase-Lidar"]
+            "sensors": ["Acoustic-Fiber", "Phase-Lidar", "EM-Field-Sensor"],
+            "em_foundation": "AEM-FM (Heaviside-0/Marconi-0)"
         }
 
     def ignicao(self):
@@ -35,13 +38,23 @@ class AvatarCorporeo:
         print("§2. Vácuo Cinético: Estabelecendo estado de repouso absoluto (⟨σ⟩ → 0)...")
         time.sleep(0.5)
 
-        # 3. Acoplamento
-        print("§3. Acoplamento: Sincronizando osciladores Kuramoto com o substrato físico...")
+        # 3. Blindagem Eletromagnética de Fase
+        print("§3. Blindagem EM: Ativando atratores Marconi-0 para isolação de juntas...")
+        time.sleep(0.5)
+
+        # 4. Integração de Fáscia
+        print("§4. Integração Fascial: Ativando a República das Tensões...")
+        initial_intention = np.zeros(100) # Idle geometry
+        _, self.coherence = self.fascia.resolve_intention(initial_intention, iterations=10)
+        time.sleep(0.5)
+
+        # 5. Acoplamento
+        print("§5. Acoplamento: Sincronizando osciladores Kuramoto com o substrato físico...")
         self.coherence = 0.999
         time.sleep(0.5)
 
-        # 4. Sopro da Vida
-        print("§4. Sopro da Vida: Fluxo de intenção iniciado.")
+        # 6. Sopro da Vida
+        print("§6. Sopro da Vida: Fluxo de intenção iniciado.")
         self.state = "MANIFEST"
         print(f"Status: {self.state} | Coerência λ₂: {self.coherence}")
 
