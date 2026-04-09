@@ -43,7 +43,7 @@ USER_TARGET = hello
 
 all: $(KERNEL_TARGET) $(USER_TARGET)
 
-ARKHE_APPS_SRC = user/arkhe_apps.c user/economic_agent.c user/atelier_bridge.c
+ARKHE_APPS_SRC = user/arkhe_apps.c user/economic_agent.c user/atelier_bridge.c user/revenue_agent.c distributed/revenue_mesh.c kernel/self_healing.c distributed/vector_db.c user/autonomous_agent.c distributed/agent_economy.c
 ARKHE_APPS_OBJ = $(ARKHE_APPS_SRC:.c=.o)
 
 $(KERNEL_TARGET): $(KERNEL_OBJ) $(DISTRIBUTED_OBJ) $(DRIVERS_OBJ) $(FS_OBJ) $(NET_OBJ) $(MM_OBJ) $(PROC_OBJ) $(ARKHE_OBJ) $(ARKHE_DAEMON_OBJ) $(INTERRUPTS_OBJ) $(PHASEVM_OBJ) $(SASC_EM_OBJ) $(SHELL_OBJ) $(SYSCALLS_OBJ) $(DEVICES_OBJ) $(ARKHE_APPS_OBJ)
