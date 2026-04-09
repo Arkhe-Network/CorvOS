@@ -22,10 +22,27 @@ typedef struct {
 void contract_split_revenue(uint64_t amount, RevenueStakeholder *stakeholders, int count);
 
 // Vector Reputation Oracle
-float oracle_evaluate_result(const float *intent_vector, const float *result_vector, int dim);
-void oracle_update_reputation(const char *agent_id, float coherence_score);
+typedef struct {
+    float semantic;
+    float punctuality;
+    float honesty;
+    float originality;
+    float satisfaction;
+} ReputationVector;
 
-// Cascade Monetization
-void contract_cascade_distribute(uint64_t total_revenue, const char *article_id);
+float oracle_calculate_novelty(const float *result_vector, int dim);
+ReputationVector oracle_evaluate_multifactor(const char *agent_id, const float *intent_v, const float *result_v, int dim);
+void oracle_update_reputation_ewma(const char *agent_id, ReputationVector new_metrics);
+
+// Cascade Monetization (Multi-level Royalty Tree)
+typedef struct {
+    char node_id[64];
+    char parent_id[64];
+    char contributor[64];
+    uint32_t royalty_bp; // Basis points (100 = 1%)
+} ContributionNode;
+
+void contract_register_node(const char *id, const char *parent, const char *contributor, uint32_t bp);
+void contract_recursive_distribute(const char *leaf_id, uint64_t amount);
 
 #endif

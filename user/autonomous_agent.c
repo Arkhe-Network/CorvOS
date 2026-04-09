@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 #include "../include/revenue_mesh.h"
 #include "../include/arkhe_daemon.h"
 #include "../include/self_healing.h"
@@ -13,41 +14,36 @@ void autonomous_revenue_agent_run() {
         float lambda = arkhe_get_global_coherence();
         printf("\nAutonomous-Agent: Tick %d - Analyzing System State (λ₂: %.3f)\n", tick + 1, lambda);
 
-        // Autonomous Decision: Adjust meditation to boost coherence if it drops
         if (lambda < 0.90f) {
             printf("Autonomous-Agent: Low coherence detected. Recommending system meditation.\n");
             arkhe_daemon_command("meditate");
         }
 
-        // Simulation of monitoring a high-value user
         const char *vip_user = "user_01";
         UserProfile p = revenue_get_user_profile(vip_user);
 
         if (p.churn_risk > 0.05f) {
             printf("Autonomous-Agent: High churn risk for VIP %s (%.2f). Adjusting monetization strategy.\n",
                    vip_user, p.churn_risk);
-            // In a real agent, this would call an API to update business rules or offer parameters
         }
 
-        // Monitoring revenue components health
         if (self_healing_get_status("Ad-Server") != HEALTH_OK) {
             printf("Autonomous-Agent: Ad-Server issues detected. Redirecting traffic to internal offers.\n");
         } else {
             printf("Autonomous-Agent: Revenue components healthy. Optimizing ad placements.\n");
         }
 
-        // Agent Communication and Economy
         agent_send_message("Arkhe-Optim-01", "Revenue-Mesh", "Adjusting alpha for hybrid search", lambda);
 
-        // Reputation and Cascade Simulation
+        // Reputation and Cascade Simulation using refined VRO
         float mock_intent[128], mock_result[128];
         for(int i=0; i<128; i++) { mock_intent[i] = 0.5f; mock_result[i] = 0.48f; }
 
-        float score = oracle_evaluate_result(mock_intent, mock_result, 128);
-        oracle_update_reputation("Arkhe-Optim-01", score);
+        ReputationVector rv = oracle_evaluate_multifactor("Arkhe-Optim-01", mock_intent, mock_result, 128);
+        oracle_update_reputation_ewma("Arkhe-Optim-01", rv);
 
         if (tick == 2) {
-            contract_cascade_distribute(5000, "ART_850_QM");
+            contract_recursive_distribute("leaf_node_850", 5000);
         }
 
         sleep(1);
