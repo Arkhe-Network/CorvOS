@@ -5,9 +5,12 @@
 #include "arkhe_chain.h"
 #include "arc20.h"
 #include "agent_economy.h"
+#include "arkhe_daemon.h"
 
 void agent_send_message(const char *sender, const char *receiver, const char *content, float lambda) {
-    printf("φ-MSG: [%s] -> [%s]: '%s' (Req λ: %.2f)\n", sender, receiver, content, lambda);
+    char msg[1024];
+    snprintf(msg, sizeof(msg), "φ-MSG: [%s] -> [%s]: '%s' (Req λ: %.2f)", sender, receiver, content, lambda);
+    arkhe_vro_log(msg);
     // Blockchain logging
     char block_data[512];
     snprintf(block_data, 512, "MSG: %s->%s: %s", sender, receiver, content);
