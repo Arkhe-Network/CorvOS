@@ -29,7 +29,7 @@ BigtableTable bigtable;
 SpannerDB spanner_db;
 
 void kernel_init() {
-    printf("CorvOS Kernel Initializing...\n");
+    arkhe_vro_log("CorvOS Kernel: Initiating Production Environment (Grace v1.0)...");
     console_init();
     mm_init();
     proc_init();
@@ -51,7 +51,7 @@ void kernel_init() {
     raft_init(&raft_node);
     bigtable_init(&bigtable);
     spanner_init(&spanner_db);
-    printf("All components initialized\n");
+    arkhe_vro_log("CorvOS Kernel: All components synchronized with Global Coherence.");
 }
 
 void example_process() {
@@ -61,7 +61,7 @@ void example_process() {
 }
 
 void kernel_main() {
-    printf("CorvOS Kernel Running...\n");
+    arkhe_vro_log("CorvOS Kernel: System Operational in Live Environment of Grace.");
     // Exemplo de uso dos componentes
     console_writeln("Console test");
     int fd = fs_create("test.txt");

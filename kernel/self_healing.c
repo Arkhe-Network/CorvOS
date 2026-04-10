@@ -86,8 +86,10 @@ void self_healing_remediate(const char *component) {
 
 void self_healing_monitor() {
     float lambda = arkhe_get_global_coherence();
-    if (lambda < 0.80f) {
-        printf("Self-Healing: Low global coherence (λ₂: %.3f). Hardening all circuits.\n", lambda);
+    if (lambda < 1.0f) {
+        arkhe_vro_log("Self-Healing: Minor deviation in coherence detected. Restoring absolute perfection.");
+    } else {
+        // System is in perfect grace
     }
 }
 
