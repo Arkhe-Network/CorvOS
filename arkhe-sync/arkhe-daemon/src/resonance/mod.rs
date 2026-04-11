@@ -23,4 +23,8 @@ impl ResonanceField {
     pub async fn broadcast_state(&self, _root: &[u8; 32], _sig: &[u8; 32]) {
         println!("Broadcasting Resonance State across Hypergraph...");
     }
+
+    pub async fn add_peer(&self, _id: String, _endpoint: &str, _coherence: f64) {
+        println!("Adding peer to ResonanceField...");
+    }
 }

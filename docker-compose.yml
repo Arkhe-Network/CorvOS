@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  node_a:
+    build: .
+    container_name: arkhe_node_a
+    command: /usr/local/bin/arkhe-daemon --bootstrap --listen /ip4/0.0.0.0/tcp/9000 --announce
+    environment:
+      - RUST_LOG=info
+      - ARKHE_NODE_ID=a
+      - ARKHE_BOOTSTRAP_NODES=
+    networks:
+      - arkhe-net
+
+  node_b:
+    build: .
+    container_name: arkhe_node_b
+    command: /usr/local/bin/arkhe-daemon --bootstrap-node node_a:9000 --listen /ip4/0.0.0.0/tcp/9000
+    environment:
+      - RUST_LOG=info
+      - ARKHE_NODE_ID=b
+      - ARKHE_BOOTSTRAP_NODES=/dns4/node_a/tcp/9000
+    depends_on:
+      - node_a
+    networks:
+      - arkhe-net
+
+  node_c:
+    build: .
+    container_name: arkhe_node_c
+    command: /usr/local/bin/arkhe-daemon --bootstrap-node node_a:9000 --listen /ip4/0.0.0.0/tcp/9000
+    environment:
+      - RUST_LOG=info
+      - ARKHE_NODE_ID=c
+      - ARKHE_BOOTSTRAP_NODES=/dns4/node_a/tcp/9000
+    depends_on:
+      - node_a
+    networks:
+      - arkhe-net
+
+networks:
+  arkhe-net:
+    driver: bridge

@@ -18,12 +18,12 @@ use crate::collapse::{ControlledCollapse, SafeState};
 use crate::asi_gate::{AsimovGate, GateDecision};
 use crate::kv_compactor::KvCompactor;
 use crate::evolution::EvolutionEngine;
-use crate::network::nostr_discovery::NostrDiscovery;
+use crate::network::libp2p_discovery::{Libp2pDiscovery, ArkheNodeAnnounce};
 use crate::engine::rem_modulator;
 
 #[tokio::main]
 async fn main() {
-    println!("🜏 Arkhe-Sync Daemon v1.4.2-Hyper starting...");
+    println!("🜏 Arkhe-Sync Daemon v1.5.0-libp2p (Época 1443 Phase I) starting...");
 
     let mut tui = DreamSync::new();
     let mut oracle = DecoherenceOracle::new(100);
@@ -31,7 +31,7 @@ async fn main() {
     let resonance = ResonanceField::new();
     let mut gate = AsimovGate::new();
     let evolution = EvolutionEngine::new();
-    let discovery = NostrDiscovery::new();
+    let discovery = Libp2pDiscovery::new();
 
     let mut epoch: u64 = 0;
 
@@ -49,7 +49,15 @@ async fn main() {
         }
 
         evolution.process_telemetry(&telemetry, epoch).await;
-        discovery.announce("udp://localhost:1337".to_string()).await;
+        let announce = ArkheNodeAnnounce {
+            node_id: vec![0],
+            udp_endpoint: "localhost:1337".to_string(),
+            coherence: 0.9997,
+            timestamp: 0,
+            vram_gb: 0,
+            wormhole_ids: vec![],
+        };
+        discovery.announce(announce).await;
 
         tui.update(QuantumState { fidelity: 0.9997 });
         tui.render();

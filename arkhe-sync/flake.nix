@@ -26,6 +26,13 @@
               type = lib.types.float;
               default = 0.95;
             };
+            libp2p = {
+              enable = lib.mkOption { type = lib.types.bool; default = true; };
+              bootstrapNodes = lib.mkOption {
+                type = lib.types.listOf lib.types.str;
+                default = [ "/ip4/198.51.100.1/tcp/9000" "/ip4/198.51.100.2/udp/9000/quic" ];
+              };
+            };
           };
 
           config = {
@@ -33,12 +40,16 @@
               xorriso isolinux qemu rustc cargo python311 python311Packages.numpy python311Packages.rich
             ];
 
+            networking.firewall.allowedTCPPorts = [ 9000 ];
+            networking.firewall.allowedUDPPorts = [ 9000 1337 ];
+
             systemd.services.arkhe-daemon = {
               enable = true;
-              description = "Arkhe-Sync Daemon v1.3";
+              description = "Arkhe-Sync Daemon v1.5-libp2p";
               serviceConfig.Environment = [
                 "ARKHE_ERAB_ACTIVE=1"
                 "ARKHE_ERAB_STRENGTH=${builtins.toString config.arkhe-sync.erabStrength}"
+                "ARKHE_BOOTSTRAP_NODES=${builtins.concatStringsSep "," config.arkhe-sync.libp2p.bootstrapNodes}"
               ];
             };
           };
