@@ -14,6 +14,7 @@ void arkhe_fem();
 void arkhe_music();
 void arkhe_calc();
 void rio_agent_01_run();
+void revenue_agent_run();
 void atelier_bridge_formalize_agent(const char *name, const char *soul, const char *dreams);
 void example_process();
 
@@ -81,6 +82,7 @@ void shell_run() {
         else if (strcmp(buffer, "music") == 0) arkhe_music();
         else if (strcmp(buffer, "calc") == 0) arkhe_calc();
         else if (strcmp(buffer, "spawn-agent") == 0) rio_agent_01_run();
+        else if (strcmp(buffer, "revenue") == 0) revenue_agent_run();
         else if (strcmp(buffer, "bridge-formalize") == 0) atelier_bridge_formalize_agent("Rio-Agent-01", "SOUL.md", "DREAMS.md");
         else if (strcmp(buffer, "meditate") == 0) {
             arkhe_daemon_command("meditate");

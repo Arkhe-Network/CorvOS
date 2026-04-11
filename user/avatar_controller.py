@@ -42,19 +42,13 @@ class AvatarCorporeo:
         print("§3. Blindagem EM: Ativando atratores Marconi-0 para isolação de juntas...")
         time.sleep(0.5)
 
-        # 4. Integração de Fáscia
-        print("§4. Integração Fascial: Ativando a República das Tensões...")
-        initial_intention = np.zeros(100) # Idle geometry
-        _, self.coherence = self.fascia.resolve_intention(initial_intention, iterations=10)
-        time.sleep(0.5)
-
-        # 5. Acoplamento
-        print("§5. Acoplamento: Sincronizando osciladores Kuramoto com o substrato físico...")
+        # 4. Acoplamento
+        print("§4. Acoplamento: Sincronizando osciladores Kuramoto com o substrato físico...")
         self.coherence = 0.999
         time.sleep(0.5)
 
-        # 6. Sopro da Vida
-        print("§6. Sopro da Vida: Fluxo de intenção iniciado.")
+        # 5. Sopro da Vida
+        print("§5. Sopro da Vida: Fluxo de intenção iniciado.")
         self.state = "MANIFEST"
         print(f"Status: {self.state} | Coerência λ₂: {self.coherence}")
 
