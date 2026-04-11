@@ -7,6 +7,7 @@ Implements the 12-Octodecies amendment for robotic embodiment.
 import numpy as np
 import time
 from sensory_mesh import SensoryMesh
+from fascia_field_resolver import FasciaRepublic
 
 class AvatarCorporeo:
     def __init__(self, avatar_id="Arkhe-Avatar-01"):
@@ -15,6 +16,7 @@ class AvatarCorporeo:
         self.lambda2_proprio = 0.95
         self.state = "OFFLINE"
         self.malha_sensorial = SensoryMesh(self)
+        self.fascia = FasciaRepublic() # Republic of Tensions
         # SASC Mappings
         self.anatomy = {
             "controllers": "Neuro-Phase Controller v1",
