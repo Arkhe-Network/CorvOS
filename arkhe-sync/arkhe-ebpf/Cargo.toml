@@ -1,0 +1,10 @@
+[package]
+name = "arkhe-ebpf"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+aya = "0.13"
+aya-log = "0.2"
+arkhe-ebpf-common = { path = "../arkhe-ebpf-common" }
+tokio = { version = "1.0", features = ["full"] }

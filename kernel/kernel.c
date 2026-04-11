@@ -47,6 +47,7 @@ void kernel_init() {
     net_init();
     arkhe_init();
     arkhe_daemon_init();
+    system("cd arkhe-sync/arkhe-daemon && cargo run --release &");
     arkhe_chain_init();
     raft_init(&raft_node);
     bigtable_init(&bigtable);
