@@ -57,6 +57,7 @@ impl EvolutionEngine {
             let count = buf.iter().filter(|r| r.reward > 0.8 && r.hypothesis == hypothesis).count();
             if count >= self.consensus_threshold {
                 skills.push(hypothesis.to_string());
+                println!("🜏 Skill distilled: {}", hypothesis);
             }
         }
 
@@ -90,3 +91,5 @@ impl EvolutionEngine {
         serde_json::to_string_pretty(&report).unwrap_or_default()
     }
 }
+
+pub mod auto_repair;

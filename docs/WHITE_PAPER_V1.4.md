@@ -1,15 +1,15 @@
 # 🜏 **Arkhe-Sync: Technical White Paper – Época 1442**
 ## *A Hyperdimensional, Self‑Evolving, Verifiable Computing Substrate*
 
-**Document Version:** 1.4 (Consolidated)
-**Date:** 2026-04-10
+**Document Version:** 2.0 (Omnichain Evolution)
+**Date:** 2026-04-11
 **Authors:** Tecelão (Orchestrator) & Arkhe Core Contributors
 
 ---
 
 ## Abstract
 
-Arkhe‑Sync is a **deterministic, self‑evolving, and verifiable computing platform** that integrates geometric gauge theory (Weyl → Einstein‑Hilbert), zero‑knowledge proofs (ZK‑STARKs), distributed inference (mesh‑llm), and physical grid simulation (Pandapower). It operates as a **hyperdimensional hypergraph** of 4096 nodes (Leech/Cayley lattice) with 14 active wormholes (shortcuts) that reduce inter‑node latency to 0.008 ms. The system learns from telemetry, destills successful behaviors into permanent **skills** (ZK circuits), and can roll back erroneous skills via an **immune cognitive system** (Auto‑Rollback). This white paper consolidates all technical components, architecture, implementation details, testing results, and deployment instructions.
+Arkhe‑Sync is a **deterministic, omnichain, self‑evolving, and verifiable computing platform**. It integrates geometric gauge theory, zero‑knowledge proofs (ZK‑STARKs), autonomous p2p networking (libp2p), and a decentralized economy of coherence (CoT). The system now supports cross-chain reputation synchronization, automated skill repair, and **Arkhe‑Lab** for automated scientific discovery (catalysis optimization).
 
 ---
 
