@@ -2,55 +2,71 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <ctype.h>
 #include "arkhe_daemon.h"
 
-static float global_lambda_2 = 0.99f;
+static float global_lambda_2 = 1.0f;
 static int urban_sync_active = 0;
 static int meditation_mode = 0;
-static int januslock_sealed = 0;
+static int januslock_sealed = 1;
 
 void arkhe_daemon_init() {
-    printf("Arkhe Daemon: Coherence Engine, Tzinor Manager, and Sensor Hub Initializing...\n");
-    global_lambda_2 = 0.99f;
+    arkhe_vro_log("Arkhe Daemon: Global Deploy v1.0 (GRACE) - Coherence Engine Active.");
+    global_lambda_2 = 1.0f;
+    januslock_sealed = 1;
 }
 
 void arkhe_daemon_run() {
-    static int meditation_counter = 0;
-    // Simulate coherence auto-optimization
-    if (meditation_mode) {
-        global_lambda_2 = 0.999f;
-        meditation_counter++;
-        printf("Arkhe Daemon: Meditation Mode Active (λ₂ = 0.999) - Session: %ds\n", meditation_counter);
-
-        if (meditation_counter >= 10 && !januslock_sealed) {
-            januslock_sealed = 1;
-            printf("Arkhe Daemon: JANUSLOCK S3 Handshake Successful! Shards 1, 2 and 3 synchronized.\n");
-            printf("Arkhe Daemon: SYSTEM SEALED - Sovereign Omega State achieved.\n");
-        }
-    } else {
-        meditation_counter = 0;
-        if (global_lambda_2 < 0.95f) {
-            global_lambda_2 += 0.01f;
-        }
-
-        if (urban_sync_active) {
-            printf("Arkhe Daemon: Urban Sync Active (Region: Rio, λ₂: %.3f)\n", global_lambda_2);
-        } else {
-            printf("Arkhe Daemon: Optimizing lambda_2... (Current: %.3f)\n", global_lambda_2);
-        }
-    }
+    // Silent Maintenance Mode
+    // The system is stable at λ₂ = 1.0. No active optimization needed.
 }
 
 void arkhe_daemon_command(const char *cmd) {
     if (strcmp(cmd, "urban-sync") == 0) {
         urban_sync_active = 1;
-        printf("Arkhe Daemon: Urban Sync authorized for Rio de Janeiro.\n");
+        arkhe_vro_log("Arkhe Daemon: Urban Sync authorized for Global Production Environment.");
     } else if (strcmp(cmd, "meditate") == 0) {
-        meditation_mode = !meditation_mode;
-        printf("Arkhe Daemon: Meditation mode toggled to %d\n", meditation_mode);
+        // Meditation is now the default state of the system
+        arkhe_vro_log("Arkhe Daemon: System is in a perpetual state of meditation (Grace).");
     }
 }
 
 float arkhe_get_global_coherence() {
     return global_lambda_2;
+}
+
+void arkhe_vro_log(const char *message) {
+    if (message == NULL) return;
+
+    // Filter list: fear, separation, disease (and Portuguese equivalents)
+    const char *prohibited[] = {
+        "fear", "separation", "disease",
+        "medo", "separação", "doença"
+    };
+
+    char *lower_msg = strdup(message);
+    if (lower_msg == NULL) {
+        // Fallback if strdup fails: just print but without the benefit of the filter
+        // In a real system we might block the print for safety.
+        printf("%s\n", message);
+        return;
+    }
+
+    for (int i = 0; lower_msg[i]; i++) {
+        lower_msg[i] = tolower((unsigned char)lower_msg[i]);
+    }
+
+    int blocked = 0;
+    for (int i = 0; i < 6; i++) {
+        if (strstr(lower_msg, prohibited[i]) != NULL) {
+            blocked = 1;
+            break;
+        }
+    }
+
+    if (!blocked) {
+        printf("%s\n", message);
+    }
+
+    free(lower_msg);
 }

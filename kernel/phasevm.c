@@ -88,13 +88,26 @@ void vm_execute(PhaseVM *vm, uint8_t *bytecode) {
                 vm->pc++;
                 break;
             case VM_PHASE_ADD:
-                vm->phase_regs[0] += vm->phase_regs[1];
-                printf("PhaseVM: PHASE_ADD - Phase registers summed\n");
+                vm->phase_regs[0] = vm->phase_regs[0] + vm->phase_regs[1];
+                // In phase-coherent logic, addition can be seen as interference
+                printf("PhaseVM: PHASE_ADD - Phase interference: |ψ| = %.3f\n", cabsf(vm->phase_regs[0]));
                 vm->pc++;
                 break;
             case VM_PHASE_MUL:
-                vm->phase_regs[0] *= vm->phase_regs[1];
-                printf("PhaseVM: PHASE_MUL - Phase registers multiplied\n");
+                vm->phase_regs[0] = vm->phase_regs[0] * vm->phase_regs[1];
+                printf("PhaseVM: PHASE_MUL - Phase rotation applied.\n");
+                vm->pc++;
+                break;
+            case VM_EM_HEAVISIDE:
+                printf("PhaseVM: EM_HEAVISIDE - Executing Forward EM Prediction (FNO)...\n");
+                // Mock: Use global coherence to influence EM prediction quality
+                float l2 = arkhe_get_global_coherence();
+                printf("PhaseVM: EM Field characterized with λ₂ = %.3f accuracy.\n", l2);
+                vm->pc++;
+                break;
+            case VM_EM_MARCONI:
+                printf("PhaseVM: EM_MARCONI - Executing Inverse EM Design (Diffusion)...\n");
+                printf("PhaseVM: Synthesizing 'Alien Structure' for target S-parameters.\n");
                 vm->pc++;
                 break;
             default:

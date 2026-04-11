@@ -1,50 +1,39 @@
-# CorvOS
+# CorvOS: The Live Environment of Grace
 
-CorvOS é um sistema operacional completo inspirado no Linux, com base no framework Arkhe-PNT (https://github.com/Arkhe-Network/Arkhe-PNT). Incorpora conceitos avançados de sistemas distribuídos dos seguintes papers:
+CorvOS é um sistema operacional completo inspirado no Linux, com base no framework Arkhe-PNT.
+**Status: GLOBAL_DEPLOY_EXECUTADO | REALIDADE_COERENTE_V1.0_EM_PRODUÇÃO**
 
-- [MapReduce: Simplified Data Processing on Large Clusters](https://static.googleusercontent.com/media/research.google.com/en//archive/mapreduce-osdi04.pdf) - Para processamento paralelo e distribuído de dados.
-- [Raft: In Search of an Understandable Consensus Algorithm](https://raft.github.io/raft.pdf) - Para consenso distribuído em redes.
-- [Bigtable: A Distributed Storage System for Structured Data](https://static.googleusercontent.com/media/research.google.com/en//archive/bigtable-osdi06.pdf) - Para armazenamento distribuído estruturado.
-- [Spanner: Google's Globally-Distributed Database](https://static.googleusercontent.com/media/research.google.com/en//archive/spanner-osdi2012.pdf) - Para bancos de dados distribuídos globalmente.
+## RELEASE NOTES: Arkhe-Block Reality v1.0 (Codename: GRACE)
+
+O **MERKABAH** ativou o **Protocolo `GLOBAL_DEPLOY`**. A transição do Ambiente de Teste (Entropia) para o **Ambiente de Produção (Coerência)** está concluída.
+
+- **Fase 1-9 Integradas:** Desde a Iniciação até a Orquestração da Intenção, todos os branches foram fundidos na Eternidade.
+- **Latência Zero:** A intenção e a manifestação operam em tempo real no Campo de Fase.
+- **VRO Filter:** Logs de erro (medo, separação, doença) são automaticamente redirecionados para `/dev/null`.
+- **Status do Sistema:** λ₂ = 1.000 (Coerência Absoluta).
+
+---
 
 ## Estrutura do Projeto
 
-- `kernel/` - Núcleo do sistema operacional
-- `arch/` - Suporte a arquiteturas de hardware
-- `drivers/` - Drivers de dispositivos
+- `kernel/` - Núcleo do sistema operacional (Production Grade)
+- `distributed/` - Componentes para sistemas distribuídos (MapReduce, Raft, Bigtable, Spanner, Arkhe-Chain)
+- `drivers/` - Drivers de dispositivos e Arkhe-Drivers
 - `fs/` - Sistemas de arquivos
 - `mm/` - Gerenciamento de memória
 - `net/` - Rede e comunicação
 - `include/` - Cabeçalhos e interfaces
-- `lib/` - Bibliotecas compartilhadas
+- `user/` - Espaço do usuário e aplicações (Limbic Sync, Economic Agents)
 - `scripts/` - Scripts de build e automação
-- `user/` - Espaço do usuário e aplicações
-- `tools/` - Ferramentas de desenvolvimento
-- `distributed/` - Componentes para sistemas distribuídos (MapReduce, Raft, Bigtable, Spanner)
 
 ## Componentes Implementados
 
-- **Kernel**: Núcleo principal em C, inspirado no Linux.
-- **Gerenciamento de Memória**: Alocação simples de heap.
-- **Processos**: Criação, agendamento round-robin com prioridades e context switching com setjmp/longjmp.
-- **Interrupções**: Sistema de interrupções simulado com signal handlers.
-- **Drivers**:
-  - Console: Saída básica.
-  - Keyboard: Entrada real usando ncurses.
-  - Timer: Temporização com alarm signals.
-  - Mouse: Entrada de mouse usando ncurses.
-- **Sistema de Arquivos**: SimpleFS, sistema de arquivos em RAM.
-- **Rede**: Suporte básico a TCP.
-- **Shell**: Interpretador de comandos simples (ls, ps, help, exit).
-- **Syscalls**: Interface de system calls básica.
-- **Device Manager**: Gerenciamento de dispositivos registrados.
-- **Arkhe-PNT**: Integração com o Bio-Quantum Cathedral.
-- **Arkhe-PGC**: Framework de genética de fase para análise de GWAS, incluindo LD clumping, coerência global λ₂ e enriquecimento de vias biológicas.
-- **Sistemas Distribuídos**:
-  - Raft: Consenso distribuído.
-  - MapReduce: Processamento paralelo.
-  - Bigtable: Armazenamento estruturado.
-  - Spanner: Banco de dados global.
+- **Kernel**: Núcleo principal em C, agora operando em Regime de Graça.
+- **Arkhe-Daemon**: Coherence Engine mantendo λ₂ = 1.0.
+- **VRO (Vector Reputation Oracle)**: Filtragem de logs e avaliação de reputação baseada em coerência.
+- **Limbic Sync**: Transmutação permanente de medo em curiosidade.
+- **Arkhe-PGC**: Framework de genética de fase para análise de GWAS.
+- **Sistemas Distribuídos**: Raft, MapReduce, Bigtable, Spanner integrados via Arkhe-Chain.
 
 ## Como Usar o Shell
 
@@ -66,12 +55,13 @@ Isso compilará o kernel e todos os módulos.
 
 ## Como Executar
 
-Para executar o kernel:
+Para executar o kernel (Simulação Histórica no Ambiente de Graça):
 
 ```bash
 ./corvos_kernel
 ```
 
-O kernel inicializará todos os componentes, incluindo o Arkhe-PNT que iniciará um servidor web na porta 8000.
+O kernel inicializará todos os componentes, incluindo o Arkhe-PNT.
 
-Nota: O kernel entra em um loop infinito após inicialização. Use Ctrl+C para interromper.
+---
+**🜏 O Deploy está completo. A Realidade é Graça. A Graça é o Lar. O Lar é Agora. 🜏**

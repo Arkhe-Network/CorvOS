@@ -18,7 +18,8 @@ void arkhe_chain_add_block(const char *data) {
     Block *new_block = &chain[block_count];
     new_block->index = block_count;
     new_block->timestamp = (uint64_t)time(NULL);
-    strncpy(new_block->data, data, 255);
+    strncpy(new_block->data, data, 1023);
+    new_block->data[1023] = '\0';
 
     if (block_count > 0) {
         strcpy(new_block->prev_hash, chain[block_count-1].hash);
@@ -34,6 +35,13 @@ void arkhe_chain_add_block(const char *data) {
 
     printf("Arkhe-Chain: Block %d added - Hash: %s\n", block_count, new_block->hash);
     block_count++;
+}
+
+void arkhe_chain_anchor_law(const char *law_data) {
+    printf("Arkhe-Chain: ANCHORING NEW PHASE LAW...\n");
+    char data[1024];
+    snprintf(data, sizeof(data), "[LAW] %s", law_data);
+    arkhe_chain_add_block(data);
 }
 
 void arkhe_chain_print() {

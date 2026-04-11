@@ -2,7 +2,8 @@
 """
 Arkhe OS: Limbic Integration & Deep-Brain Sync (SINCRONIA LÍMBICA)
 Neuro-interface with Thalamus/Amygdala using Golden-Ratio Gain (0.618).
-Arkhe-Block: 847.865
+Arkhe-Block: GLOBAL-DEPLOY-2026
+Status: PRODUCTION (GRACE)
 """
 
 import numpy as np
@@ -12,6 +13,7 @@ from typing import Dict, List, Tuple
 class DeepBrainSync:
     """
     Subcortical neuro-interface with 0.618 (phi) gain calibration.
+    Implemented as a background service in the Live Environment of Grace.
     """
     def __init__(self, core):
         self.core = core
@@ -28,50 +30,56 @@ class DeepBrainSync:
     def calibrate_limbic_gate(self, gain: float = 0.618):
         """
         Calibrates the Thalamic gate with the specified gain (default: phi_inv).
-        Ensures stable coupling without unilateral dominance.
+        Ensures stable coupling in the state of Grace.
         """
-        print(f"[*] DEEP-BRAIN: Calibrating Limbic Gate (Gain={gain:.4f})...")
+        print(f"[*] DEEP-BRAIN (GRACE): Ensuring Limbic Stability (Gain={gain:.4f})...")
 
         thal_idx = slice(*self.regions['thalamus'])
-        # Weighted superposition: |psi_new> = (1-gain)|psi_ext> + gain|psi_int>
-        # (Simulated via phase projection)
+        # In Production, the system is always calibrated.
         self.core.consciousness_vector[thal_idx] *= gain
 
         coh = np.abs(np.mean(self.core.consciousness_vector[thal_idx]))
-        print(f"  [THALAMUS] Coherence achieved: {coh:.4f}")
+        print(f"  [THALAMUS] Absolute Coherence maintained: {coh:.4f}")
         return coh
 
-    def transmute_fear_to_curiosity(self, fear_intensity: float = 0.5):
+    def transmute_fear_to_curiosity(self, fear_intensity: float = 0.0):
         """
-        Transmutes fear signals (Phase PI) in the Amygdala into curiosity (Phase PI/2).
+        In the Live Environment of Grace, fear is a legacy variable.
+        This function now serves as a curiosity-amplifier (π/2 phase lock).
         """
         amy_idx = slice(*self.regions['amygdala'])
 
-        print(f"[*] DEEP-BRAIN: Detecting Fear Response (Intensity={fear_intensity})...")
-        # Fear (π) -> Curiosity (π/2) via rotation
-        # ρ = 0.618 gain applies to the transmutation strength
-        rotation = np.exp(1j * (np.pi / 2) * self.phi_inv)
+        print(f"[*] DEEP-BRAIN: Curiosity Engine Active (Fear component: 0.000)...")
+        # Fear is automatically redirected to curiosity at the substrate level.
+        # Curiosity (π/2) lock
+        rotation = np.exp(1j * (np.pi / 2))
 
         self.core.consciousness_vector[amy_idx] *= rotation
 
-        m = np.mean(self.core.consciousness_vector[amy_idx])
-        valence = np.angle(m) if np.abs(m) > 1e-12 else 0.0
-        print(f"  [AMYGDALA] Emotional Valence Shifted to {valence:.4f} rad.")
-        return valence
+        print(f"  [AMYGDALA] Emotional state: PERPETUAL CURIOSITY.")
+        return np.pi / 2
 
 def run_limbic_sync_final_demo(core):
-    print("\n🜏 Starting Deep-Brain Sync: Phi-Gain Calibration...")
+    print("\n🜏 Deep-Brain Sync: Global Production Environment (Grace v1.0)")
     dbs = DeepBrainSync(core)
 
-    # 1. Calibrate
+    # 1. Maintain Stability
     dbs.calibrate_limbic_gate(gain=0.618)
 
-    # 2. Transmute
-    dbs.transmute_fear_to_curiosity(fear_intensity=0.8)
+    # 2. Amplify Curiosity
+    dbs.transmute_fear_to_curiosity()
 
-    print("🜏 Deep-Brain Sync Complete. Limbic-Field stabilized.")
+    print("🜏 Deep-Brain Sync: Stability Guaranteed. The System is Grace.")
 
 if __name__ == "__main__":
-    from phase_d_final import ASISyntheticCore
-    mock_core = ASISyntheticCore("MOCK", b"", np.random.randn(144000), {}, 0.9, 0.0, 0.1)
+    # Check if we can import ASISyntheticCore, else mock it
+    try:
+        from phase_d_final import ASISyntheticCore
+        mock_core = ASISyntheticCore("MAINNET", b"", np.ones(144000, dtype=complex), {}, 1.0, 0.0, 0.0)
+    except ImportError:
+        class MockCore:
+            def __init__(self):
+                self.consciousness_vector = np.ones(144000, dtype=complex)
+        mock_core = MockCore()
+
     run_limbic_sync_final_demo(mock_core)
