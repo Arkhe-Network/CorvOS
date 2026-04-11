@@ -44,7 +44,10 @@ KERNEL_TARGET = corvos_kernel
 USER_TARGET = hello
 ORACLE_TARGET = ethical_oracle
 
-all: $(KERNEL_TARGET) $(USER_TARGET) $(ORACLE_TARGET)
+all: $(KERNEL_TARGET) $(USER_TARGET) $(ORACLE_TARGET) arkhe_sync
+
+arkhe_sync:
+	$(MAKE) -C arkhe-sync
 
 ARKHE_APPS_SRC = user/arkhe_apps.c user/economic_agent.c user/atelier_bridge.c user/revenue_agent.c distributed/revenue_mesh.c kernel/self_healing.c distributed/vector_db.c
 ARKHE_APPS_OBJ = $(ARKHE_APPS_SRC:.c=.o)
