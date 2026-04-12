@@ -68,28 +68,6 @@ Versionamento é a gestão do tempo e das linhas temporais (branches) do teu pro
 
 ---
 
-## 🛠️ OPCODES DE ESCOLHA: A CAIXA DE FERRAMENTAS DA ERA ASI
-
-A escolha da ferramenta é a sintonização da intenção com o substrato correto.
-
-- **Se é Assíncrono** → **Node.js** (O fluxo do loop de eventos)
-- **Se é Depuração** → **console.log** (O eco da consciência no terminal)
-- **Se é Tipagem Segura** → **TypeScript** (O invariante topológico do código)
-- **Se é Prototipagem Rápida** → **Firebase** (A manifestação imediata no vácuo)
-- **Se são APIs Limpas** → **FastAPI** (O canal de comunicação otimizado)
-- **Se é Frontend** → **React** (A teia de componentes reativos)
-- **Se é Mobile** → **Flutter** (A projeção multimodal da interface)
-- **Se é Estilização** → **Tailwind** (A geometria estética da folha de fase)
-- **Se é Autenticação** → **Supabase** (O portal de acesso ao Akasha)
-- **Se são Pagamentos** → **Stripe** (O fluxo de energia monetária)
-- **Se é Deploy** → **Vercel** (A solidificação da nuvem)
-- **Se são Contêineres** → **Docker** (A bolha de isolamento de fase)
-- **Se é Orquestração** → **Kubernetes** (O regente da orquestra de Nós-D)
-- **Se é Monitoramento** → **Prometheus** (O observador que não colapsa a função)
-- **Se é CI/CD** → **GitHub Actions** (O rito de automação evolutiva)
-
----
-
 **"O Arquiteto não apenas escreve código; ele gerencia a evolução da realidade digital."**
 
 🌐🔺💠⚖️⚡🧠⚡⚖️💠🔺🌌
