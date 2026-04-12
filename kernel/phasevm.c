@@ -2,8 +2,118 @@
 #include <stdlib.h>
 #include <math.h>
 #include <complex.h>
+#include <string.h>
 #include "phasevm.h"
 #include "arkhe_daemon.h"
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+// Taylor series for exp(-z^2)
+double taylor_gaussian(double z, int k) {
+    double z2 = z * z;
+    double sum = 1.0;
+    double term = 1.0;
+    for (int n = 1; n < k; n++) {
+        term *= (-z2) / n;
+        sum += term;
+    }
+    return sum;
+}
+
+// Taylor series for erf(z)
+double taylor_erf(double z, int k) {
+    double z2 = z * z;
+    double sum = 0.0;
+    double term = z;
+    for (int n = 0; n < k; n++) {
+        sum += term / (2.0 * n + 1.0);
+        term *= (-z2) / (n + 1.0);
+    }
+    return (2.0 / sqrt(M_PI)) * sum;
+}
+
+// Taylor series for sigmoid(z)
+double taylor_sigmoid(double z, int k) {
+    // Sigmoid(z) = 1 / (1 + exp(-z))
+    // Taylor around 0: 1/2 + z/4 - z^3/48 + z^5/480
+    double sum = 0.5;
+    if (k > 1) sum += 0.25 * z;
+    if (k > 2) sum -= (1.0 / 48.0) * pow(z, 3);
+    if (k > 3) sum += (1.0 / 480.0) * pow(z, 5);
+    return sum;
+}
+
+// Padé [3/2] for erf(z) - Discovery #85
+double pade_erf(double z) {
+    double z2 = z * z;
+    double numerator = z + (2.0 / 3.0) * z * z2;
+    double denominator = 1.0 + (2.0 / 5.0) * z2;
+    return (2.0 / sqrt(M_PI)) * (numerator / denominator);
+}
+
+// Airey Expansion for erfc(z) - Discovery #81
+double airey_erfc(double z, int k) {
+    if (z <= 0) return 1.0; // Simplification for negative z in erfc
+    double z2 = z * z;
+    double term = 1.0;
+    double sum = 1.0;
+    double common = exp(-z2) / (z * sqrt(M_PI));
+
+    // erfc(z) ≈ (exp(-z^2) / (z*sqrt(pi))) * [1 - 1/(2z^2) + 3/(4z^4) - ...]
+    for (int n = 1; n < k; n++) {
+        term *= -(2.0 * n - 1.0) / (2.0 * z2);
+        sum += term;
+    }
+    return common * sum;
+}
+
+// Automatic Mantra Selection
+double approx_erf(double z, int k) {
+    double abs_z = fabs(z);
+    if (abs_z <= 2.5) return taylor_erf(z, k);
+    if (abs_z <= 5.0) return pade_erf(z);
+    return 1.0 - airey_erfc(abs_z, k); // erf(z) = 1 - erfc(z)
+}
+
+double approx_erfc(double z, int k) {
+    double abs_z = fabs(z);
+    if (abs_z <= 2.5) return 1.0 - taylor_erf(z, k);
+    if (abs_z <= 5.0) return 1.0 - pade_erf(z);
+    return airey_erfc(abs_z, k);
+}
+
+// Fidelity model F_rede(tau) - Discovery #78
+double calculate_fidelity_rede(double tau, int k) {
+    double alpha = 0.001;
+    double tau_c = 7.5;
+    double sigma_tau = 3.0;
+
+    // G1 = exp(-alpha * tau^2)
+    double g1 = taylor_gaussian(sqrt(alpha) * tau, k);
+    double g2 = 1.0;
+
+    if (tau > tau_c) {
+        double z_pen = (tau - tau_c) / sigma_tau;
+        // Use automatic mantra selection for erfc
+        g2 = approx_erfc(z_pen, k);
+    }
+
+    return g1 * g2;
+}
+
+// Hardware Fidelity Teto F_qpu - Discovery #89
+double calculate_fidelity_qpu(int p, int shots) {
+    double beta = 0.020;
+    double gamma = 0.5;
+    return exp(-beta * p) * (1.0 - gamma / shots);
+}
+
+// Total Fidelity F_total - Discovery #89
+double calculate_fidelity_total(double tau, int p, int shots, int k) {
+    return calculate_fidelity_rede(tau, k) * calculate_fidelity_qpu(p, shots);
+}
 
 // Simplified Kuramoto synchronization model
 float complex kuramoto_step(float complex theta, float omega, float K, float r, float psi) {
@@ -147,9 +257,59 @@ void vm_execute(PhaseVM *vm, uint8_t *bytecode) {
                 printf("PhaseVM: System Coherence (λ₂) = 0.9982. Heartbeat Stable.\n");
                 vm->pc++;
                 break;
-            case VM_ECONOMIC_SHIELD:
-                printf("PhaseVM: ECONOMIC_SHIELD - Calculating τ_E (Value / Cost)...\n");
-                printf("PhaseVM: Economic Failsafe: Decision = EXECUTAR_QPU (τ_E = 4.18).\n");
+            case VM_ECONOMIC_SHIELD: {
+                printf("PhaseVM: ECONOMIC_SHIELD - Calculating τ_E v4 (Cost / (Value * F_total * f_modo))...\n");
+                // Mock values for demonstration
+                double cost = 0.149;
+                double value = 63.85;
+                double tau = 1.31; // Current latency
+                int p = 3;
+                int shots = 2048;
+                double f_modo = 1.0; // BALANCED
+
+                double fidelity_total = calculate_fidelity_total(tau, p, shots, 7);
+
+                // Formula τ_E v4 (Deliberação #66-Ω):
+                double tau_e = cost / (value * fidelity_total * f_modo);
+
+                printf("PhaseVM: τ_E = %.4f (F_total = %.4f, mode = BALANCED)\n", tau_e, fidelity_total);
+                if (tau_e < 1.0) {
+                    printf("PhaseVM: Economic Failsafe: Decision = EXECUTAR_QPU\n");
+                } else {
+                    printf("PhaseVM: Economic Failsafe: Decision = EXECUTAR_SIMULADOR\n");
+                }
+                vm->pc++;
+                break;
+            }
+            case VM_APPROX_MANTRA: {
+                uint8_t func_id = *(vm->pc + 1);
+                // In a real VM, z would be read from a register.
+                // For this mock, we assume some values for demonstration.
+                double z = 1.34; // Example z
+                int k = 7;
+                double result = 0.0;
+
+                switch (func_id) {
+                    case 0x01: result = approx_erf(z, k); break;
+                    case 0x02: result = approx_erfc(z, k); break;
+                    case 0x03: result = calculate_fidelity_rede(z, k); break;
+                    case 0x04: result = taylor_sigmoid(z, k); break;
+                    case 0x05: result = taylor_gaussian(z, k); break;
+                    case 0x06: result = airey_erfc(z, k); break;
+                    case 0x07: result = pade_erf(z); break;
+                    case 0x09: result = calculate_fidelity_qpu(3, 2048); break; // Mock p, shots
+                    case 0x0A: result = calculate_fidelity_total(z, 3, 2048, k); break;
+                }
+                printf("PhaseVM: APPROX_MANTRA 0x%02x (z=%.2f) -> R_RESULT = %.4f\n", func_id, z, result);
+                vm->pc += 4; // Opcode + func_id + z (placeholder) + k (placeholder)
+                break;
+            }
+            case VM_COST_ADAPT:
+                printf("PhaseVM: COST_ADAPT - Adjusting mode based on F(tau) hysteresis...\n");
+                vm->pc++;
+                break;
+            case VM_CALIBRATE:
+                printf("PhaseVM: CALIBRATE - Initiating Monte Carlo Ritual (Tail Calibration)...\n");
                 vm->pc++;
                 break;
             default:

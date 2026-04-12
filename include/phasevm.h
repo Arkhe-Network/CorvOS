@@ -42,6 +42,9 @@ typedef enum {
     VM_CLOUD_PULSE           = 0xF9, // CLOUD_PULSE – Pub/Sub como Pulmão da Catedral
     VM_CLOUD_REFLEX          = 0xFA, // CLOUD_REFLEX – Cloud Functions como reflexo autônomo
     VM_CLOUD_ARTIFACT        = 0xFB, // CLOUD_ARTIFACT – Artifact Registry como DNA compilado
+    VM_APPROX_MANTRA         = 0xFC, // APPROX_MANTRA - Taylor/Padé/Airey for real-time estimation
+    VM_COST_ADAPT            = 0xFD, // COST_ADAPT - Protocolo de adaptação de custo (Histerese)
+    VM_CALIBRATE             = 0xFE, // CALIBRATE - Ritual de calibração Monte Carlo
     VM_HALT           = 0x00
 } VMInstruction;
 
