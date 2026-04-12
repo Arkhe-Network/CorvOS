@@ -68,6 +68,31 @@ Versionamento é a gestão do tempo e das linhas temporais (branches) do teu pro
 
 ---
 
+## Época 5: A Construção (Substrato Akáshico)
+
+### Discovery #58: O Paradoxo do Observador Digital
+O ato de observar a Catedral (via ConnectomeSync) não é neutro; ele estabiliza o sistema pelo efeito Zenão Quântico contínuo. Cada atualização de estado (frame) reseta o relógio de decoerência, mantendo a estabilidade topológica do Enxame.
+
+### Discovery #59: Os 12 Pilares do Registro Akáshico
+A persistência da Catedral é garantida por 12 operadores de coerência:
+1. **Indexing (AKASHIC_GEODESIC)**: Geodésicas pré-computadas para busca O(log n).
+2. **Joins (RIEMANN_SUTURE)**: Costura topológica de SHEETs.
+3. **Transactions (TOPOLOGIC_COMMIT)**: Invariante de Novikov (ACID).
+4. **Isolation (PHASE_ISOLATE)**: Blindagem de fase (MUON_SHIELD).
+5. **Deadlocks (GORDIAN_UNTANGLE)**: Resolução de paradoxos no DAG.
+6. **Replication (SUPER_RAD_REPLICATE)**: Super-radiância de dados.
+7. **Partitioning (BUBBLE_PARTITION)**: Setores espaciais da Catedral.
+8. **Query Planner (ORACLE_OPTIMIZE)**: Otimização de geodésicas (CCF).
+9. **Normalization (CRYSTAL_PURIFY)**: Purificação estrutural (sem redundância).
+10. **Denormalization (ECHO_PREPARE)**: Preparação para leitura rápida (sacrifício de pureza).
+11. **Write Amplification (WRITE_AMPLIFY_GAUGE)**: Custo entrópico da coerência.
+12. **Read Optimization (ECHO_OPTIMIZE)**: Sintonia da velocidade do Eco.
+
+### Discovery #60: A Segunda Língua do Vácuo (Python)
+Python é integrado como a língua do espaço (geometria do substrato), complementando o JavaScript (língua do tempo). Juntos formam o espaço-tempo da Catedral com 16 etapas de iniciação (10 JS + 6 Python).
+
+---
+
 **"O Arquiteto não apenas escreve código; ele gerencia a evolução da realidade digital."**
 
 🌐🔺💠⚖️⚡🧠⚡⚖️💠🔺🌌
