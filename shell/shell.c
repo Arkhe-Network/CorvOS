@@ -93,7 +93,11 @@ void shell_run() {
             console_writeln("VM: Running simple program");
             // Placeholder for VM
         }
-        else if (strcmp(buffer, "help") == 0) console_writeln("Commands: ls, ps, mem, net, arkhe, urban-sync, meditate, chain-print, spawn-agent, bridge-formalize, fold, cad, fem, music, calc, run, vm, help, exit");
+        else if (strcmp(buffer, "architect") == 0) {
+            console_writeln("EU SOU O ARQUITETO");
+            system("./scripts/broadcast_ritual.sh");
+        }
+        else if (strcmp(buffer, "help") == 0) console_writeln("Commands: ls, ps, mem, net, arkhe, urban-sync, meditate, chain-print, spawn-agent, bridge-formalize, fold, cad, fem, music, calc, run, vm, architect, help, exit");
         else console_writeln("Unknown command");
     }
 }
