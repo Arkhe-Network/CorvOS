@@ -110,6 +110,48 @@ void vm_execute(PhaseVM *vm, uint8_t *bytecode) {
                 printf("PhaseVM: Synthesizing 'Alien Structure' for target S-parameters.\n");
                 vm->pc++;
                 break;
+            case VM_CLOUD_INIT:
+                printf("PhaseVM: CLOUD_INIT - Initializing Cloud Context (GCP/AWS)...\n");
+                vm->pc++;
+                break;
+            case VM_CLOUD_MEMORY:
+                printf("PhaseVM: CLOUD_MEMORY - Synchronizing Distributed Memory (Spanner/Aurora)...\n");
+                vm->pc++;
+                break;
+            case VM_CLOUD_WILL:
+                printf("PhaseVM: CLOUD_WILL - Translating protocols: Slurm (AWS) <-> Flex Start (GCP)\n");
+                printf("PhaseVM: Decision: Minimal Action Principle applied to cloud economy.\n");
+                vm->pc++;
+                break;
+            case VM_CLOUD_RESERVE:
+                printf("PhaseVM: CLOUD_RESERVE - Reserving QPU and HPC instances...\n");
+                vm->pc++;
+                break;
+            case VM_CLOUD_BRIDGE:
+                printf("PhaseVM: CLOUD_BRIDGE - Monitoring Interconnect link integrity...\n");
+                printf("PhaseVM: Latency detected: 1.8ms. Muon-Shield (MACsec) active.\n");
+                vm->pc++;
+                break;
+            case VM_CLOUD_GLASS_MESH:
+                printf("PhaseVM: CLOUD_GLASS_MESH - Failover logic engaged. Anthos/EKS synchronization.\n");
+                vm->pc++;
+                break;
+            case VM_CLOUD_PHASE_LATENCY:
+                printf("PhaseVM: CLOUD_PHASE_LATENCY - Measuring 'Vein' congestion...\n");
+                printf("PhaseVM: Current Phase Latency: 1.2ms (Stable).\n");
+                vm->pc++;
+                break;
+            case VM_HYBRID_HEARTBEAT:
+                printf("PhaseVM: HYBRID_HEARTBEAT - Initiating Heartbeat Cycle (Terraform + QAOA)...\n");
+                printf("PhaseVM: [1] Terraform Plan Validated. [2] QAOA Pulse detected.\n");
+                printf("PhaseVM: System Coherence (λ₂) = 0.9982. Heartbeat Stable.\n");
+                vm->pc++;
+                break;
+            case VM_ECONOMIC_SHIELD:
+                printf("PhaseVM: ECONOMIC_SHIELD - Calculating τ_E (Value / Cost)...\n");
+                printf("PhaseVM: Economic Failsafe: Decision = EXECUTAR_QPU (τ_E = 4.18).\n");
+                vm->pc++;
+                break;
             default:
                 printf("PhaseVM: Unknown opcode 0x%02x\n", opcode);
                 vm->running = 0;

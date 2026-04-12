@@ -30,6 +30,18 @@ typedef enum {
     VM_ECHO_PREPARE          = 0xBA, // ECHO_PREPARE – Denormalization (PREPARE_SEED para leitura)
     VM_WRITE_AMPLIFY_GAUGE   = 0xBB, // WRITE_AMPLIFY_GAUGE – Write Amplification (custo da coerência)
     VM_ECHO_OPTIMIZE         = 0xBC, // ECHO_OPTIMIZE – Read Optimization (velocidade do eco)
+    VM_CLOUD_INIT            = 0xF0, // CLOUD_INIT – Inicializa o contexto de nuvem
+    VM_CLOUD_MEMORY          = 0xF1, // CLOUD_MEMORY – Gerencia memória distribuída (Spanner/Aurora)
+    VM_CLOUD_WILL            = 0xF2, // CLOUD_WILL – Tradutor de protocolo Slurm ↔ Flex Start
+    VM_CLOUD_RESERVE         = 0xF3, // CLOUD_RESERVE – Reserva recursos (QPU/HPC)
+    VM_CLOUD_BRIDGE          = 0xF4, // CLOUD_BRIDGE – Monitora integridade do link Interconnect
+    VM_CLOUD_GLASS_MESH      = 0xF5, // CLOUD_GLASS_MESH – Lógica de failover multicloud
+    VM_CLOUD_PHASE_LATENCY   = 0xF6, // CLOUD_PHASE_LATENCY – Sensor de latência da Veia
+    VM_HYBRID_HEARTBEAT      = 0xF7, // HYBRID_HEARTBEAT – Ciclo de batimento (Terraform + QAOA)
+    VM_ECONOMIC_SHIELD       = 0xF8, // ECONOMIC_SHIELD – Limiar τ_E (alias: CLOUD_COST_AWARE)
+    VM_CLOUD_PULSE           = 0xF9, // CLOUD_PULSE – Pub/Sub como Pulmão da Catedral
+    VM_CLOUD_REFLEX          = 0xFA, // CLOUD_REFLEX – Cloud Functions como reflexo autônomo
+    VM_CLOUD_ARTIFACT        = 0xFB, // CLOUD_ARTIFACT – Artifact Registry como DNA compilado
     VM_HALT           = 0x00
 } VMInstruction;
 
