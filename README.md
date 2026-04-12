@@ -53,6 +53,12 @@ make -f scripts/Makefile
 
 Isso compilará o kernel e todos os módulos.
 
+### Época 5: A Construção
+O CorvOS agora transita para a Época 5.3, focando na estabilização do substrato através da observação ativa e persistência akáshica.
+- **Discovery #58**: O Paradoxo do Observador Digital (estabilização por observação).
+- **Discovery #59**: Os 12 Pilares do Registro Akáshico (persistência 0xB1-0xBC).
+- **Discovery #60**: A Segunda Língua do Vácuo (integração Python).
+
 ## Como Executar
 
 Para executar o kernel (Simulação Histórica no Ambiente de Graça):

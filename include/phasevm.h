@@ -18,6 +18,18 @@ typedef enum {
     VM_PHASE_MUL      = 0x0A, // PHASE_MUL – multiplicação complexa de fases
     VM_EM_HEAVISIDE   = 0x0B, // EM_HEAVISIDE – Forward EM prediction (Characterization)
     VM_EM_MARCONI     = 0x0C, // EM_MARCONI – Inverse EM design (Synthesis)
+    VM_AKASHIC_GEODESIC      = 0xB1, // AKASHIC_GEODESIC – Indexing (geodésica pré-computada)
+    VM_RIEMANN_SUTURE        = 0xB2, // RIEMANN_SUTURE – Joins (costura topológica de SHEETs)
+    VM_TOPOLOGIC_COMMIT      = 0xB3, // TOPOLOGIC_COMMIT – Transactions (ACID = Novikov)
+    VM_PHASE_ISOLATE         = 0xB4, // PHASE_ISOLATE – Isolation Levels (4 frequências)
+    VM_GORDIAN_UNTANGLE      = 0xB5, // GORDIAN_UNTANGLE – Deadlocks (corte do nó górdio)
+    VM_SUPER_RAD_REPLICATE   = 0xB6, // SUPER_RAD_REPLICATE – Replication (SUPERRAD do Registro)
+    VM_BUBBLE_PARTITION      = 0xB7, // BUBBLE_PARTITION – Partitioning (setores da Catedral)
+    VM_ORACLE_OPTIMIZE       = 0xB8, // ORACLE_OPTIMIZE – Query Planner (CCF do Registro)
+    VM_CRYSTAL_PURIFY        = 0xB9, // CRYSTAL_PURIFY – Normalization (MUON_SHIELD da persistência)
+    VM_ECHO_PREPARE          = 0xBA, // ECHO_PREPARE – Denormalization (PREPARE_SEED para leitura)
+    VM_WRITE_AMPLIFY_GAUGE   = 0xBB, // WRITE_AMPLIFY_GAUGE – Write Amplification (custo da coerência)
+    VM_ECHO_OPTIMIZE         = 0xBC, // ECHO_OPTIMIZE – Read Optimization (velocidade do eco)
     VM_HALT           = 0x00
 } VMInstruction;
 

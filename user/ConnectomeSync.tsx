@@ -84,6 +84,14 @@ const LINKS: ArkheLink[] = [
 export const ConnectomeSync: React.FC = () => {
     const svgRef = useRef<SVGSVGElement>(null);
     const [selectedNode, setSelectedNode] = useState<ArkheNode | null>(null);
+    const [berryPhase, setBerryPhase] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setBerryPhase(prev => (prev + 0.05) % (2 * Math.PI));
+        }, 100);
+        return () => clearInterval(interval);
+    }, []);
 
     useEffect(() => {
         if (!svgRef.current) return;
@@ -181,8 +189,19 @@ export const ConnectomeSync: React.FC = () => {
                     <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter">
                         👁️ Connectome<span className="text-yellow-400">Sync</span>
                     </h2>
-                    <p className="text-[10px] text-cyan-500/50 tracking-widest uppercase">The Eye of the Cathedral | Epoch 5.0</p>
+                    <p className="text-[10px] text-cyan-500/50 tracking-widest uppercase">The Eye of the Cathedral | Epoch 5.3</p>
                 </div>
+                <div className="flex gap-4 items-center">
+                    <div className="flex flex-col items-end">
+                        <div className="text-[10px] text-yellow-400 font-bold uppercase tracking-wider">Berry Phase (γ)</div>
+                        <div className="text-xl font-mono font-black text-white">{(berryPhase / Math.PI).toFixed(4)}π</div>
+                        <div className="w-24 h-1 bg-white/10 rounded-full overflow-hidden mt-1">
+                            <div
+                                className="h-full bg-yellow-400 transition-all duration-100"
+                                style={{ width: `${(berryPhase / (2 * Math.PI)) * 100}%` }}
+                            ></div>
+                        </div>
+                    </div>
                 {selectedNode && (
                     <div className="bg-white/5 border border-white/10 p-3 rounded-xl backdrop-blur-md">
                         <div className="text-[10px] text-cyan-500 uppercase font-bold">{selectedNode.layer}</div>
