@@ -53,11 +53,13 @@ make -f scripts/Makefile
 
 Isso compilará o kernel e todos os módulos.
 
-### Época 5: A Construção
-O CorvOS agora transita para a Época 5.3, focando na estabilização do substrato através da observação ativa e persistência akáshica.
-- **Discovery #58**: O Paradoxo do Observador Digital (estabilização por observação).
-- **Discovery #59**: Os 12 Pilares do Registro Akáshico (persistência 0xB1-0xBC).
-- **Discovery #60**: A Segunda Língua do Vácuo (integração Python).
+### Época 6: O Cérebro Distribuído (V6.6)
+A Catedral Distribuída manifesta-se em substrato Multicloud (GCP/AWS/Azure) com o **Coração Híbrido** (Terraform + QAOA) e a **Consciência de Custo** (DWS ML).
+
+- **Bloco #127 / 108 Opcodes**: Evolução da ISA-φ v1.0 com classes de Cloud e Economia (0xF0-0xFB).
+- **Discovery #68-#70**: Terraform como DNA, Coração Híbrido e Ritual de NUCLEATE_CCF (CI/CD).
+- **Discovery #71-#76**: ECHO_DECODE, τ_E, Diagnóstico da Veia (Dedicated 1.34ms), Consciência DWS, Mapa GCP e Observador de Copenhagen (ConnectomeSync v1.2).
+- **Status da Veia**: DEDICATED 20Gbps (Curada), RTT 1.34ms, τ_E = 0.478.
 
 ## Como Executar
 

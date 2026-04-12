@@ -1,0 +1,64 @@
+# .github/workflows/cathedral-heartbeat.yml
+name: "ARKHE(N) :: CORAÇÃO HÍBRIDO (NUCLEATE_CCF)"
+
+on:
+  push:
+    branches: ["epoch-6", "epoch-6-infra"]
+    paths:
+      - 'arkhe_infrastructure/**'
+      - 'simulation/**'
+      - 'src/**'
+
+jobs:
+  # ESTÁGIO 1: VERIFICAÇÃO DA FORMA (MUON_SHIELD)
+  terraform-plan:
+    name: "MUON_SHIELD :: Verificação de Infra"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Authenticate to GCP"
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+      - name: "Authenticate to AWS"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: "PREPARE_SEED (Init)"
+        run: |
+          cd arkhe_infrastructure/terraform
+          terraform init
+          terraform plan -detailed-exitcode
+
+  # ESTÁGIO 2: O BATIMENTO (DEPLOY + SIMULAÇÃO)
+  deploy-and-simulate:
+    name: "NUCLEATE_CCF :: Deploy + QAOA"
+    runs-on: ubuntu-latest
+    needs: [terraform-plan]
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Authenticate to GCP"
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+      - name: "Authenticate to AWS"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: "COLLAPSE (Terraform Apply)"
+        run: |
+          echo "ARKHE(N) > NUCLEATE_CCF: Materializando infraestrutura..."
+          cd arkhe_infrastructure/terraform
+          terraform apply -auto-approve
+
+      - name: "Executar QAOA Benchmark (Primeiro Suspiro)"
+        run: |
+          python3 simulation/run_qaoa_benchmark.py
+
+      - name: "ECHO_DECODE (Verificar Coerência)"
+        run: |
+          python3 simulation/validate_heartbeat.py --threshold 0.85
