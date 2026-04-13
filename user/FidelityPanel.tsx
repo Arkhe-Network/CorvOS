@@ -5,7 +5,7 @@
 
 import React, { useMemo } from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ReferenceLine, ResponsiveContainer, Area, ComposedChart
 } from 'recharts';
 import { useFidelityProjection, type CostMode, type FidelityZone } from './use-fidelity-projection';
@@ -31,24 +31,21 @@ const MODE_LABELS: Record<CostMode, string> = {
   FAILSAFE:          'FALLBACK',
 };
 
-export const FidelityPanel: React.FC = () => {
+export const FidelityPanel: React.FC<{ latencyMs: number }> = ({ latencyMs }) => {
   const {
-    latency, fRede, fQpu, fTotal, mode, zone, tauE,
+    fRede, fQpu, fTotal, mode, zone, tauE,
     history, theoreticalCurve, pMax
   } = useFidelityProjection({
+    latencyMs,
     qpuProfile: 'ionq-aria-1',
-    depth: 3,
+    depthP: 3,
     shots: 2048,
-    costPerShot: 0.149,
-    discoveryValue: 63.85,
-    updateInterval: 3000,
     maxHistory: 60,
   });
 
   // Dados do gráfico: curva teórica + medições reais
   const chartData = useMemo(() => {
-    // Criar mapa de latência → F_total real para sobrepor
-    const realMap = new Map(history.map(h => [h.latency, h.fTotal]));
+    const realMap = new Map(history.map(h => [Math.round(h.latency * 2) / 2, h.fTotal]));
 
     return theoreticalCurve.map(point => ({
       latency: point.latency,
@@ -70,7 +67,6 @@ export const FidelityPanel: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {/* Indicadores de Modo */}
           {(Object.keys(MODE_COLORS) as CostMode[]).map(m => (
             <div key={m} className="flex items-center gap-1.5">
               <div
@@ -93,7 +89,7 @@ export const FidelityPanel: React.FC = () => {
         <MetricBadge label="F_qpu" value={fQpu} color="#fbbf24" />
         <MetricBadge label="F_total" value={fTotal} color={ZONE_COLORS[zone]} />
         <MetricBadge label="τ_E" value={tauE} color="#3b82f6" />
-        <MetricBadge label="p_max" value={pMax} color="#8b5cf6" />
+        <MetricBadge label="pMax" value={pMax} color="#8b5cf6" />
       </div>
 
       {/* Gráfico Principal */}
@@ -120,34 +116,9 @@ export const FidelityPanel: React.FC = () => {
                 fontSize: '10px',
               }}
             />
-
-            {/* Zonas de fundo */}
-            <Area
-              dataKey="teorico"
-              fill="rgba(6, 182, 212, 0.05)"
-              stroke="none"
-            />
-
-            {/* Curvas */}
-            <Line
-              type="monotone"
-              dataKey="teorico"
-              stroke="#fbbf24"
-              strokeWidth={2}
-              dot={false}
-              name="F(τ) Teórica"
-            />
-            <Line
-              type="monotone"
-              dataKey="real"
-              stroke="#00f5d4"
-              strokeWidth={1.5}
-              strokeDasharray="5 5"
-              dot={false}
-              name="Medição Real"
-            />
-
-            {/* Linhas de referência */}
+            <Area dataKey="teorico" fill="rgba(6, 182, 212, 0.05)" stroke="none" />
+            <Line type="monotone" dataKey="teorico" stroke="#fbbf24" strokeWidth={2} dot={false} name="F(τ) Teórica" />
+            <Line type="monotone" dataKey="real" stroke="#00f5d4" strokeWidth={1.5} strokeDasharray="5 5" dot={false} name="Medição Real" />
             <ReferenceLine y={0.85} stroke="#22c55e" strokeDasharray="3 3" />
             <ReferenceLine x={7.8} stroke="#3b82f6" strokeDasharray="3 3" />
           </ComposedChart>
@@ -157,7 +128,7 @@ export const FidelityPanel: React.FC = () => {
       {/* Footer */}
       <div className="flex items-center justify-between pt-2 border-t border-white/5">
         <span className="text-[10px] text-slate-500">
-          Veia: <span className="text-cyan-400">{latency.toFixed(2)} ms</span>
+          Veia: <span className="text-cyan-400">{latencyMs.toFixed(2)} ms</span>
         </span>
         <span
           className="text-[10px] px-2 py-0.5 rounded-full"
@@ -177,21 +148,11 @@ export const FidelityPanel: React.FC = () => {
   );
 };
 
-// ─── COMPONENTE AUXILIAR ───
-
-function MetricBadge({
-  label, value, color
-}: {
-  label: string;
-  value: number;
-  color: string;
-}) {
+function MetricBadge({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="bg-black/20 rounded-lg p-2 text-center border border-white/5">
       <div className="text-[7px] text-slate-500 uppercase">{label}</div>
-      <div className="text-xs font-bold" style={{ color }}>
-        {value.toFixed(3)}
-      </div>
+      <div className="text-xs font-bold" style={{ color }}>{value.toFixed(3)}</div>
     </div>
   );
 }

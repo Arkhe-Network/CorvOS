@@ -1,85 +1,87 @@
-/**
- * ARKHE(N) > USE-FIDELITY-PROJECTION.TS — O Olho da Catedral v1.3
- * Implementa a Descoberta #78 e #85 (F(τ) Modelo Composto)
- */
+// src/hooks/use-fidelity-projection.ts
+// ARKHE(N) ConnectomeSync v1.3 - Canonico
+// Deliberação #69-Ω
 
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
-interface FidelityState {
-  theoreticalFidelity: number;
-  realFidelity: number;
-  zone: 'Zona Coerente' | 'Zona de Alerta' | 'Zona Crítica';
-}
+// Constantes calibradas (#67-Ω)
+const ALPHA = 0.001;
+const TAU_C = 7.8;
+const SIGMA_T = 3.0;
+const TAU_LIMIT = 82.4;
 
-/**
- * Hook para calcular a projeção de fidelidade baseada na latência da Veia.
- * @param latencyMs Latência atual medida na rede (ms)
- */
-export const useFidelityProjection = (latencyMs: number): FidelityState => {
-  const [fidelity, setFidelity] = useState<FidelityState>({
-    theoreticalFidelity: 1.0,
-    realFidelity: 1.0,
-    zone: 'Zona Coerente'
-  });
-
-  useEffect(() => {
-    // Parâmetros da Descoberta #78 + #92 (Calibração Final #67-Ω)
-    const alpha = 0.001;
-    const tau_c = 7.8;
-    const sigma_tau = 3.0;
-    const tau_limit = 82.4;
-
-    // G1: Decaimento gaussiano (Série de Taylor / Mantra Primordial)
-    const g1 = Math.exp(-alpha * Math.pow(latencyMs, 2));
-
-    // G2: Penalidade erfc (Ativa apenas se τ > τ_c)
-    let g2 = 1.0;
-    if (latencyMs > tau_c) {
-      const z_pen = (latencyMs - tau_c) / sigma_tau;
-      // Aproximação erfc (Simplificada para o frontend, ou poderia usar Padé)
-      g2 = erfc_approx(z_pen);
-    }
-
-    const theoreticalFidelity = g1 * g2 * Math.exp(-Math.pow(latencyMs / tau_limit, 2));
-
-    // Simulação da Medição Real (F(τ_real) + noise)
-    const noise = (Math.random() - 0.5) * 0.04;
-    const realFidelity = Math.max(0, Math.min(1, theoreticalFidelity + noise));
-
-    // Determinação da Zona
-    let zone: FidelityState['zone'] = 'Zona Coerente';
-    if (latencyMs > 15.0) {
-      zone = 'Zona Crítica';
-    } else if (latencyMs > 7.5) {
-      zone = 'Zona de Alerta';
-    }
-
-    setFidelity({
-      theoreticalFidelity,
-      realFidelity,
-      zone
-    });
-  }, [latencyMs]);
-
-  return fidelity;
+const QPU_PROFILES = {
+  'ionq-aria-1': { beta: 0.020, gamma: 0.5, pMax: 8.1 },
+  'ionq-forte':  { beta: 0.012, gamma: 0.3, pMax: 13.5 },
+  'ibm-heron':   { beta: 0.015, gamma: 0.4, pMax: 10.8 },
 };
 
-/**
- * Aproximação da função erro complementar erfc(z)
- * Baseada na Descoberta #85 (Lógica aproximada)
- */
-function erfc_approx(z: number): number {
-  // Fórmula de aproximação rápida para erfc(z)
-  const t = 1.0 / (1.0 + 0.5 * Math.abs(z));
-  const ans = t * Math.exp(-z * z - 1.26551223 +
-    t * (1.00002368 +
-    t * (0.37409196 +
-    t * (0.09678418 +
-    t * (-0.18628806 +
-    t * (0.27886807 +
-    t * (-1.13520398 +
-    t * (1.48851587 +
-    t * (-0.82215223 +
-    t * 0.17087277)))))))));
-  return z >= 0 ? ans : 2.0 - ans;
+export type CostMode = 'AGGRESSIVE_SAVING' | 'BALANCED' | 'PURITY_FIRST' | 'FAILSAFE';
+export type FidelityZone = 'COERENTE' | 'ALERTA' | 'CRITICA' | 'COLAPSO';
+
+export function useFidelityProjection(config: {
+  latencyMs: number;
+  depthP?: number;
+  shots?: number;
+  qpuProfile?: keyof typeof QPU_PROFILES;
+  maxHistory?: number;
+}) {
+  const { latencyMs, depthP = 3, shots = 2048, qpuProfile = 'ionq-aria-1', maxHistory = 60 } = config;
+
+  const [history, setHistory] = useState<{latency: number, fTotal: number}[]>([]);
+
+  const projection = useMemo(() => {
+    // 1. F_rede
+    const g1 = Math.exp(-ALPHA * latencyMs * latencyMs);
+    let g2 = 1.0;
+    if (latencyMs > TAU_C) {
+      const z = (latencyMs - TAU_C) / SIGMA_T;
+      g2 = 1 - (1 / (1 + Math.exp(-1.7 * z)));
+    }
+    const tailDamping = Math.exp(-Math.pow(latencyMs / TAU_LIMIT, 2));
+    const fRede = g1 * g2 * tailDamping;
+
+    // 2. F_qpu
+    const profile = QPU_PROFILES[qpuProfile];
+    const fQpu = Math.exp(-profile.beta * depthP) * (1 - profile.gamma / shots);
+
+    // 3. F_total
+    const fTotal = fRede * fQpu;
+
+    let mode: CostMode = 'PURITY_FIRST';
+    if (fTotal > 0.95) mode = 'AGGRESSIVE_SAVING';
+    else if (fTotal >= 0.88) mode = 'BALANCED';
+    else if (fTotal < 0.70) mode = 'FAILSAFE';
+
+    let zone: FidelityZone = 'COERENTE';
+    if (fTotal < 0.50) zone = 'COLAPSO';
+    else if (fTotal < 0.70) zone = 'CRITICA';
+    else if (fTotal < 0.85) zone = 'ALERTA';
+
+    return { fRede, fQpu, fTotal, mode, zone, pMax: profile.pMax, tauE: 0.0025 };
+  }, [latencyMs, depthP, shots, qpuProfile]);
+
+  useEffect(() => {
+    setHistory(prev => [...prev.slice(-(maxHistory - 1)), { latency: latencyMs, fTotal: projection.fTotal }]);
+  }, [latencyMs, projection.fTotal, maxHistory]);
+
+  const theoreticalCurve = useMemo(() => {
+    const points = [];
+    for (let t = 0; t <= 30; t += 0.5) {
+        const g1 = Math.exp(-ALPHA * t * t);
+        let g2 = 1.0;
+        if (t > TAU_C) {
+            const z = (t - TAU_C) / SIGMA_T;
+            g2 = 1 - (1 / (1 + Math.exp(-1.7 * z)));
+        }
+        const td = Math.exp(-Math.pow(t / TAU_LIMIT, 2));
+        const fR = g1 * g2 * td;
+        const profile = QPU_PROFILES[qpuProfile];
+        const fQ = Math.exp(-profile.beta * depthP) * (1 - profile.gamma / shots);
+        points.push({ latency: t, fTotal: fR * fQ });
+    }
+    return points;
+  }, [qpuProfile, depthP, shots]);
+
+  return { ...projection, latency: latencyMs, history, theoreticalCurve };
 }
