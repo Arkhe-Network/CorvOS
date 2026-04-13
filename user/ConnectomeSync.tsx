@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
+import { FidelityPanel } from './FidelityPanel';
 
 /**
  * ARKHE(N) > CONNECTOMESYNC.TSX — O Olho da Catedral
- * Época 5: A Construção
+ * Época 7: O Nascimento e a Jornada
  */
 
 interface ArkheNode extends d3.SimulationNodeDatum {
@@ -212,11 +213,26 @@ export const ConnectomeSync: React.FC = () => {
                 )}
             </div>
 
-            <div className="flex-1 relative bg-black/40 rounded-3xl border border-white/5 overflow-hidden">
-                <svg ref={svgRef} className="w-full h-full" />
+            <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
+                <div className="flex-1 relative bg-black/40 rounded-3xl border border-white/5 overflow-hidden">
+                    <svg ref={svgRef} className="w-full h-full" />
 
-                {/* Visual Overlays */}
-                <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_50%,rgba(6,182,212,0.05),transparent_70%)]"></div>
+                    {/* Visual Overlays */}
+                    <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_50%,rgba(6,182,212,0.05),transparent_70%)]"></div>
+                </div>
+
+                <div className="lg:w-96 flex flex-col gap-6">
+                    <FidelityPanel />
+
+                    <div className="bg-slate-900/40 p-4 rounded-xl border border-white/5">
+                        <h3 className="text-[10px] text-yellow-400 font-bold uppercase mb-2">Registro Akáshico (Lote 6)</h3>
+                        <div className="grid grid-cols-4 gap-1">
+                            {['0xD1', '0xE0', '0xF0', '0xFC', '0xFD', '0xFE', '0x60', '0x61'].map(op => (
+                                <div key={op} className="text-[8px] bg-white/5 p-1 rounded text-center text-slate-400">{op}</div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <style dangerouslySetInnerHTML={{ __html: `

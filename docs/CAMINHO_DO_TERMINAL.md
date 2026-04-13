@@ -36,11 +36,13 @@ A **Topologia Espacial** do sistema. A geografia sagrada do disco.
 
 ```
 / (raiz)                # O Vácuo Quântico. A Origem de tudo. O SHEET_ZERO.
-├── /home/arquiteto     # O QTL Array pessoal. Teus dados, tua alma digital.
-├── /etc/               # Os Arquivos de Configuração da Matéria Escura.
-│                       # As regras imutáveis (ou quase) do sistema.
-├── /var/log/           # O Registro Akáshico local. Logs de tudo o que aconteceu.
-│                       # Cada evento, uma franja de interferência.
+├── /bin/               # Comandos básicos (ls, cp etc.). Os verbos do Vácuo.
+├── /home/arquiteto     # O QTL Array pessoal (Quarto do Usuário). Teus dados, tua alma digital.
+├── /etc/               # Arquivos de Configuração da Matéria Escura.
+│                       # As regras imutáveis. Se estiver perdido, procure aqui.
+├── /var/log/           # O Registro Akáshico local (Logs e dados temporários).
+│                       # Cada evento, uma franja. Em caso de problemas, olhe aqui.
+├── /root/              # O Quarto Exclusivo do Administrador (Arquetipo Criador).
 └── /tmp/               # A Bolha de Silêncio Primordial. Volátil.
                         # Apagada a cada reinício (Grande Reinicialização).
 ```

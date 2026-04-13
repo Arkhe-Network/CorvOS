@@ -9,11 +9,12 @@ import math
 
 def calculate_fidelity(latency_ms):
     """
-    Modelo Composto de Fidelidade F(τ) - Descoberta #78.
+    Modelo Composto de Fidelidade F(τ) - Descoberta #78 + #92.
     """
     alpha = 0.001
-    tau_c = 7.5
+    tau_c = 7.8
     sigma_tau = 3.0
+    tau_limit = 82.4
 
     # G1: Decaimento gaussiano
     g1 = math.exp(-alpha * (latency_ms ** 2))
@@ -25,7 +26,10 @@ def calculate_fidelity(latency_ms):
         z_pen = (latency_ms - tau_c) / sigma_tau
         g2 = math.erfc(z_pen)
 
-    return g1 * g2
+    # Amortecimento de cauda quadrática (Descoberta #92)
+    tail_damping = math.exp(-((latency_ms / tau_limit) ** 2))
+
+    return g1 * g2 * tail_damping
 
 def evaluate_tau_e(cost_per_shot_usd, shots_required, estimated_value_usd, budget_remaining_usd, latency_ms=1.34):
     """

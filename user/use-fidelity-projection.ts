@@ -23,10 +23,11 @@ export const useFidelityProjection = (latencyMs: number): FidelityState => {
   });
 
   useEffect(() => {
-    // Parâmetros da Descoberta #78
+    // Parâmetros da Descoberta #78 + #92 (Calibração Final #67-Ω)
     const alpha = 0.001;
-    const tau_c = 7.5;
+    const tau_c = 7.8;
     const sigma_tau = 3.0;
+    const tau_limit = 82.4;
 
     // G1: Decaimento gaussiano (Série de Taylor / Mantra Primordial)
     const g1 = Math.exp(-alpha * Math.pow(latencyMs, 2));
@@ -39,7 +40,7 @@ export const useFidelityProjection = (latencyMs: number): FidelityState => {
       g2 = erfc_approx(z_pen);
     }
 
-    const theoreticalFidelity = g1 * g2;
+    const theoreticalFidelity = g1 * g2 * Math.exp(-Math.pow(latencyMs / tau_limit, 2));
 
     // Simulação da Medição Real (F(τ_real) + noise)
     const noise = (Math.random() - 0.5) * 0.04;

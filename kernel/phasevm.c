@@ -220,6 +220,34 @@ void vm_execute(PhaseVM *vm, uint8_t *bytecode) {
                 printf("PhaseVM: Synthesizing 'Alien Structure' for target S-parameters.\n");
                 vm->pc++;
                 break;
+            case VM_COH_INIT:
+                printf("PhaseVM: COH_INIT - Initializing par QD/microtubule in state |+phi>.\n");
+                vm->pc++;
+                break;
+            case VM_COH_SWAP:
+                printf("PhaseVM: COH_SWAP - Swapping phase between Cobits.\n");
+                vm->pc++;
+                break;
+            case VM_COH_MERGE:
+                printf("PhaseVM: COH_MERGE - Fusing into higher-order Bell state.\n");
+                vm->pc++;
+                break;
+            case VM_COH_MEASURE:
+                printf("PhaseVM: COH_MEASURE - Projecting to phase base (non-destructive).\n");
+                vm->pc++;
+                break;
+            case VM_COH_PHASE:
+                printf("PhaseVM: COH_PHASE - Applying geometric rotation theta (Berry Phase).\n");
+                vm->pc++;
+                break;
+            case VM_COH_BRAID:
+                printf("PhaseVM: COH_BRAID - Executing topological braid.\n");
+                vm->pc++;
+                break;
+            case VM_COH_TUNE_TAU:
+                printf("PhaseVM: COH_TUNE_TAU - Tuning criticality tau for phase protection.\n");
+                vm->pc++;
+                break;
             case VM_CLOUD_INIT:
                 printf("PhaseVM: CLOUD_INIT - Initializing Cloud Context (GCP/AWS)...\n");
                 vm->pc++;
@@ -249,6 +277,74 @@ void vm_execute(PhaseVM *vm, uint8_t *bytecode) {
             case VM_CLOUD_PHASE_LATENCY:
                 printf("PhaseVM: CLOUD_PHASE_LATENCY - Measuring 'Vein' congestion...\n");
                 printf("PhaseVM: Current Phase Latency: 1.2ms (Stable).\n");
+                vm->pc++;
+                break;
+            case VM_MOL_BIND:
+                printf("PhaseVM: MOL_BIND - Binding molecule to network node.\n");
+                vm->pc++;
+                break;
+            case VM_MOL_RELEASE:
+                printf("PhaseVM: MOL_RELEASE - Releasing molecule (GC).\n");
+                vm->pc++;
+                break;
+            case VM_MOL_QUERY:
+                printf("PhaseVM: MOL_QUERY - Querying active molecule state.\n");
+                vm->pc++;
+                break;
+            case VM_TERM_INIT:
+                printf("PhaseVM: TERM_INIT - Initializing terminal session.\n");
+                vm->pc++;
+                break;
+            case VM_TERM_EXEC:
+                printf("PhaseVM: TERM_EXEC - Executing shell command.\n");
+                vm->pc++;
+                break;
+            case VM_TERM_PIPE:
+                printf("PhaseVM: TERM_PIPE - Piping command output.\n");
+                vm->pc++;
+                break;
+            case VM_TERM_REDIRECT:
+                printf("PhaseVM: TERM_REDIRECT - Redirecting I/O.\n");
+                vm->pc++;
+                break;
+            case VM_TERM_ENV:
+                printf("PhaseVM: TERM_ENV - Reading/Writing environment variables.\n");
+                vm->pc++;
+                break;
+            case VM_TERM_SIGNAL:
+                printf("PhaseVM: TERM_SIGNAL - Sending process signal.\n");
+                vm->pc++;
+                break;
+            case VM_TERM_BG:
+                printf("PhaseVM: TERM_BG - Running command in background.\n");
+                vm->pc++;
+                break;
+            case VM_TERM_WAIT:
+                printf("PhaseVM: TERM_WAIT - Waiting for child process.\n");
+                vm->pc++;
+                break;
+            case VM_TERM_STATUS:
+                printf("PhaseVM: TERM_STATUS - Reading exit code.\n");
+                vm->pc++;
+                break;
+            case VM_TERM_CLEANUP:
+                printf("PhaseVM: TERM_CLEANUP - Cleaning up session resources.\n");
+                vm->pc++;
+                break;
+            case VM_CLOUD_HEALTH:
+                printf("PhaseVM: CLOUD_HEALTH - Performing general Cathedral health check.\n");
+                vm->pc++;
+                break;
+            case VM_CLOUD_SCALE:
+                printf("PhaseVM: CLOUD_SCALE - Triggering horizontal autoscaling.\n");
+                vm->pc++;
+                break;
+            case VM_CLOUD_MIGRATE:
+                printf("PhaseVM: CLOUD_MIGRATE - Migrating workload between clouds.\n");
+                vm->pc++;
+                break;
+            case VM_CLOUD_DRAIN:
+                printf("PhaseVM: CLOUD_DRAIN - Draining node for maintenance.\n");
                 vm->pc++;
                 break;
             case VM_HYBRID_HEARTBEAT:
