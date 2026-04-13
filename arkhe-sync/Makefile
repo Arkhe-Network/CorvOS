@@ -1,6 +1,6 @@
 # Makefile para Arkhe-Sync
 
-all: daemon ebpf bridge circuits
+all: daemon ebpf bridge circuits orbvm
 
 daemon:
 	cd arkhe-daemon && cargo build --release
@@ -17,5 +17,8 @@ circuits:
 iso:
 	./scripts/generate_iso.sh
 
+orbvm:
+	cd orbvm && cargo build --release
+
 clean:
-	rm -rf arkhe-daemon/target arkhe-ebpf/target
+	rm -rf arkhe-daemon/target arkhe-ebpf/target orbvm/target
