@@ -27,6 +27,7 @@ typedef enum {
     VM_COH_PHASE      = 0x64,
     VM_COH_BRAID      = 0x65,
     VM_COH_TUNE_TAU   = 0x66,
+    VM_COH_SOLIDIFY   = 0x67,
 
     // DB / Akáshic Registry (Ratificados)
     VM_AKASHIC_WRITE  = 0xB1,
@@ -74,7 +75,7 @@ typedef enum {
     VM_CLOUD_ARTIFACT = 0xFB,
 
     // Math & Calibration
-    VM_APPROX_MANTRA  = 0xFC,
+    VM_TAYLOR_MANTRA  = 0xFC,
     VM_COST_ADAPT     = 0xFD,
     VM_CALIBRATE      = 0xFE,
     VM_SENTINEL       = 0xFF

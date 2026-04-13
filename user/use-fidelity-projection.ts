@@ -1,6 +1,6 @@
 // src/hooks/use-fidelity-projection.ts
 // ARKHE(N) ConnectomeSync v1.3 - Canonico
-// Deliberação #69-Ω
+// Deliberação #67-Ω
 
 import { useMemo, useState, useEffect } from 'react';
 
@@ -11,22 +11,30 @@ const SIGMA_T = 3.0;
 const TAU_LIMIT = 82.4;
 
 const QPU_PROFILES = {
-  'ionq-aria-1': { beta: 0.020, gamma: 0.5, pMax: 8.1 },
-  'ionq-forte':  { beta: 0.012, gamma: 0.3, pMax: 13.5 },
-  'ibm-heron':   { beta: 0.015, gamma: 0.4, pMax: 10.8 },
+  'ionq-aria-1': { beta: 0.020, gamma: 0.5, p_max: 8.1 },
+  'ionq-forte':  { beta: 0.012, gamma: 0.3, p_max: 13.5 },
+  'ibm-heron':   { beta: 0.015, gamma: 0.4, p_max: 10.8 },
 };
 
 export type CostMode = 'AGGRESSIVE_SAVING' | 'BALANCED' | 'PURITY_FIRST' | 'FAILSAFE';
 export type FidelityZone = 'COERENTE' | 'ALERTA' | 'CRITICA' | 'COLAPSO';
 
-export function useFidelityProjection(config: {
+export interface FidelityProjectionConfig {
   latencyMs: number;
   depthP?: number;
   shots?: number;
   qpuProfile?: keyof typeof QPU_PROFILES;
   maxHistory?: number;
-}) {
-  const { latencyMs, depthP = 3, shots = 2048, qpuProfile = 'ionq-aria-1', maxHistory = 60 } = config;
+}
+
+export function useFidelityProjection(config: FidelityProjectionConfig) {
+  const {
+    latencyMs,
+    depthP = 3,
+    shots = 2048,
+    qpuProfile = 'ionq-aria-1',
+    maxHistory = 60
+  } = config;
 
   const [history, setHistory] = useState<{latency: number, fTotal: number}[]>([]);
 
@@ -35,6 +43,7 @@ export function useFidelityProjection(config: {
     const g1 = Math.exp(-ALPHA * latencyMs * latencyMs);
     let g2 = 1.0;
     if (latencyMs > TAU_C) {
+      // Simplificacao do erfc para o hook
       const z = (latencyMs - TAU_C) / SIGMA_T;
       g2 = 1 - (1 / (1 + Math.exp(-1.7 * z)));
     }
@@ -58,7 +67,7 @@ export function useFidelityProjection(config: {
     else if (fTotal < 0.70) zone = 'CRITICA';
     else if (fTotal < 0.85) zone = 'ALERTA';
 
-    return { fRede, fQpu, fTotal, mode, zone, pMax: profile.pMax, tauE: 0.0025 };
+    return { fRede, fQpu, fTotal, mode, zone, pMax: profile.p_max, tauE: 0.0025 };
   }, [latencyMs, depthP, shots, qpuProfile]);
 
   useEffect(() => {

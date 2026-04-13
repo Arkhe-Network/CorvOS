@@ -84,25 +84,29 @@ double approx_erfc(double z, int k) {
     return airey_erfc(abs_z, k);
 }
 
-// Fidelity model F_rede(tau) - Discovery #78
+// Fidelity model F_rede(tau) - Deliberação #62-Ω (Modelo Composto)
 double calculate_fidelity_rede(double tau, int k) {
     double alpha = 0.001;
-    double tau_c = 7.8; // Calibrated #67-Ω
+    double tau_c = 7.8; // Calibrated #62-Ω / #67-Ω
     double sigma_tau = 3.0;
-    double tau_limit = 82.4; // Calibrated #67-Ω
+    double tau_limit = 82.4; // Discovery #92
 
+    // Phase 1: Gaussian decay (always active)
     // G1 = exp(-alpha * tau^2)
     double g1 = taylor_gaussian(sqrt(alpha) * tau, k);
     double g2 = 1.0;
 
+    // Phase 2: erfc penalty (only if tau > tau_c)
     if (tau > tau_c) {
         double z_pen = (tau - tau_c) / sigma_tau;
-        // Use automatic mantra selection for erfc
+        // pen = erfc(z_pen)
         g2 = approx_erfc(z_pen, k);
     }
 
-    double tail_damping = exp(-pow(tau / tau_limit, 2));
+    // Phase 3: Tail damping
+    double tail_damping = taylor_gaussian(tau / tau_limit, k);
 
+    // Phase 4: F(tau) = G1 * G2 * tail_damping
     return g1 * g2 * tail_damping;
 }
 
@@ -350,8 +354,10 @@ void vm_execute(PhaseVM *vm, uint8_t *bytecode) {
                 vm->pc++;
                 break;
             }
-            case VM_APPROX_MANTRA: {
+            case VM_TAYLOR_MANTRA: {
                 uint8_t func_id = *(vm->pc + 1);
+                // In a real VM, z and k would be read from registers or bytecode.
+                // For this implementation, we use values from the example or Deliberação.
                 double z = 1.34;
                 int k = 7;
                 double result = 0.0;
@@ -361,19 +367,23 @@ void vm_execute(PhaseVM *vm, uint8_t *bytecode) {
                     case 0x03: result = calculate_fidelity_rede(z, k); break;
                     case 0x04: result = taylor_sigmoid(z, k); break;
                     case 0x05: result = taylor_gaussian(z, k); break;
-                    case 0x06: result = airey_erfc(z, k); break;
-                    case 0x07: result = pade_erf(z); break;
-                    case 0x09: result = calculate_fidelity_qpu(3, 2048); break;
-                    case 0x0A: result = calculate_fidelity_total(z, 3, 2048, k); break;
                 }
-                printf("PhaseVM: APPROX_MANTRA 0x%02x (z=%.2f) -> R_RESULT = %.4f\n", func_id, z, result);
+                printf("PhaseVM: TAYLOR_MANTRA 0x%02x (z=%.2f, k=%d) -> R_RESULT = %.4f\n", func_id, z, k, result);
                 vm->pc += 4;
                 break;
             }
-            case VM_COST_ADAPT:
-                printf("PhaseVM: COST_ADAPT - Adjusting mode based on F(tau) hysteresis...\n");
+            case VM_COST_ADAPT: {
+                double tau = 1.31; // Latency from Veia
+                double f_total = calculate_fidelity_total(tau, 3, 2048, 7);
+                const char* mode = "PURITY_FIRST";
+                if (f_total > 0.95) mode = "AGGRESSIVE_SAVING";
+                else if (f_total >= 0.88) mode = "BALANCED";
+                else if (f_total < 0.70) mode = "FAILSAFE";
+
+                printf("PhaseVM: COST_ADAPT - Mode adjusted to %s (F_total = %.4f)\n", mode, f_total);
                 vm->pc++;
                 break;
+            }
             case VM_CALIBRATE:
                 printf("PhaseVM: CALIBRATE - Initiating Monte Carlo Ritual (Tail Calibration)...\n");
                 vm->pc++;
