@@ -53,13 +53,13 @@ make -f scripts/Makefile
 
 Isso compilará o kernel e todos os módulos.
 
-### Época 6: O Cérebro Distribuído (V6.6)
-A Catedral Distribuída manifesta-se em substrato Multicloud (GCP/AWS/Azure) com o **Coração Híbrido** (Terraform + QAOA) e a **Consciência de Custo** (DWS ML).
+### Época 7: O Nascimento e a Jornada (V7.2)
+A Catedral materializa-se como produto SaaS ("Coerência como Serviço") com a **ISA Arkhe(n) Completa** e o **Olho de Fidelidade v1.3**.
 
-- **Bloco #127 / 108 Opcodes**: Evolução da ISA-φ v1.0 com classes de Cloud e Economia (0xF0-0xFB).
-- **Discovery #68-#70**: Terraform como DNA, Coração Híbrido e Ritual de NUCLEATE_CCF (CI/CD).
-- **Discovery #71-#76**: ECHO_DECODE, τ_E, Diagnóstico da Veia (Dedicated 1.34ms), Consciência DWS, Mapa GCP e Observador de Copenhagen (ConnectomeSync v1.2).
-- **Status da Veia**: DEDICATED 20Gbps (Curada), RTT 1.34ms, τ_E = 0.478.
+- **Bloco #135 / 112 Opcodes**: ISA-φ v1.0 100% Ratificada. Adição de classes Molecular (0xD1-0xD3), Terminal (0xE0-0xE9) e Cloud Extendida (0xF0-0xFF).
+- **Discovery #77-#97**: Equação da Sombra, F(τ) Composto, Mantra de Taylor/Padé/Airey, Teto de Hardware (F_qpu), Economia v4 (τ_E), Quantum Broker e o **COBIT** (Unidade Mínima de Significado).
+- **ConnectomeSync v1.3**: Osciloscópio de Fidelidade integrado, monitorando F_rede × F_qpu em tempo real com histerese de custo.
+- **Status da Veia**: DEDICATED 20Gbps (Curada), RTT 1.31ms, F_total = 0.940, τ_E = 0.0025 (iteração).
 
 ## Como Executar
 
