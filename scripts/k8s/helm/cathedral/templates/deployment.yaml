@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "cathedral.fullname" . }}
+  labels:
+    {{- include "cathedral.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "cathedral.fullname" . }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "cathedral.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "cathedral.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: tct-twin
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        command: ["python3", "/usr/local/bin/tct_twin_server.py"]
+        ports:
+        - containerPort: 42000
+        volumeMounts:
+        - name: covm-run
+          mountPath: /var/run
+        - name: akasha-storage
+          mountPath: /var/log/akasha
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+      - name: covm-daemon
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        command: ["/usr/local/bin/covm-daemon"]
+        args:
+        - "--socket"
+        - "/var/run/covm.sock"
+        - "--baseline-tau"
+        - "{{ .Values.covm.baselineTau }}"
+        {{- if .Values.tct.physical.enabled }}
+        - "--tct-device"
+        - "{{ .Values.tct.physical.devicePath }}"
+        {{- end }}
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: covm-run
+          mountPath: /var/run
+        - name: akasha-storage
+          mountPath: /var/log/akasha
+        {{- if .Values.tct.physical.enabled }}
+        - name: tct-device
+          mountPath: /dev/tct0
+        {{- end }}
+      volumes:
+      - name: covm-run
+        emptyDir: {}
+      {{- if .Values.tct.physical.enabled }}
+      - name: tct-device
+        hostPath:
+          path: /dev/tct0
+      {{- end }}
+  volumeClaimTemplates:
+  - metadata:
+      name: akasha-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: {{ .Values.akasha.storage.storageClass }}
+      resources:
+        requests:
+          storage: {{ .Values.akasha.storage.size }}
