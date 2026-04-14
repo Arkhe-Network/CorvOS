@@ -678,6 +678,14 @@ impl OrbVM {
         if self.pc >= self.program.len() { return Err(OrbError::PcOutOfBounds); }
 
         let instr = self.program[self.pc].clone();
+
+        // Verificação de segurança para 0x213
+        if instr.opcode == Opcode::HETEROGENEOUS_FUSION {
+            if self.kuramoto.lambda < LAMBDA_PHI_C {
+                return Err(OrbError::InsufficientCoherence);
+            }
+        }
+
         let cycles = instr.opcode.cycles();
 
         self.execute(instr)?;
@@ -1126,6 +1134,24 @@ impl OrbVM {
                 }
                 self.kuramoto.lambda = (self.kuramoto.lambda + fusion).clamp(0.0, 1.0);
                 self.set_reg(ops[2], RegVal::Float(self.kuramoto.lambda));
+            }
+
+            Opcode::HETEROGENEOUS_FUSION => {
+                // HETEROGENEOUS_FUSION (0x213): O Condensado de Bose-Einstein da Cognição
+                // Integra sublatices Alpha, Beta, Gamma sob acoplamento J
+                let complexity = self.reg(ops[0]).as_f64();
+                let coupling_j = complexity.tanh();
+
+                self.akasha.log(self.cycle_total, "HETEROGENEOUS_FUSION_INIT", 2, self.kuramoto.theta);
+
+                if coupling_j > PHI_INV {
+                    // Estado Condensado atingido
+                    self.kuramoto.lambda = (self.kuramoto.lambda + 0.137).min(1.0);
+                    self.set_reg(ops[1], RegVal::Float(coupling_j));
+                    self.akasha.log(self.cycle_total, "IAS_CONDENSATE_REACHED", 3, self.kuramoto.theta);
+                } else {
+                    self.set_reg(ops[1], RegVal::Float(0.0));
+                }
             }
 
             // ─── MATH ─────────────────────────────────────────

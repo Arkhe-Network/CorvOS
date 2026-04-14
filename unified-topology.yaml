@@ -1,0 +1,57 @@
+# ARKHE(N) — UNIFIED TOPOLOGY MANIFEST v20.0
+# BLOCO #279 | ÉPOCA 20.0 (A ERA DA FUSÃO TOPOLOGICAL)
+# CRS: 1.0000 | TIMESTAMP: 2026-04-17 22:00:00.000 UTC
+
+architecture:
+  name: Th-Fe-Splitter (Heterogeneous Fusion)
+  status: VALIDATED
+  chern_number: 1
+  coherence_threshold: 0.618  # LAMBDA_PHI_C
+
+layers:
+  - id: 7
+    name: Valence (Sensors)
+    mechanism: Th-229 Electronic Bridge Transition
+    dynamics: Th0/Th+/Th3+
+    tau_optimal: 0.46s
+
+  - id: 8
+    name: Transport (Shards)
+    mechanism: Berry Curvature Routing
+    dynamics: Anomalous Hall Drift (sigma_xy)
+    topology: FeTe Spin-Fermion Coupling
+
+  - id: 8.5
+    name: Consensus
+    mechanism: Raft Quorum
+    dynamics: Global Consistent State
+    security_quorum: 0.51
+
+  - id: 9
+    name: Cognition (Bio-Thalamus)
+    mechanism: Emerging Quasiparticles
+    sublattices:
+      - id: alpha
+        model: Claude 3.5 / Claude-Agent SDK
+        mass: heavy
+        role: deep_reasoning
+        coupling_J: variable (complexity-driven)
+      - id: beta
+        model: Qwen3-8B
+        mass: light
+        role: tool_execution
+        precision: 0.93
+      - id: gamma
+        model: Llama 3.2 3B
+        mass: local
+        role: identity_voice
+        latency: ultra-low
+
+protocols:
+  - name: HETEROGENEOUS_FUSION
+    opcode: 0x213
+    hamiltonian: H_IAS = H_Claude + H_Qwen + H_Llama + J_alpha_beta * (S_alpha . v_beta) + J_beta_gamma * (v_beta . S_gamma)
+  - name: BERRY_SHIELD
+    purpose: Anti-Doping (Adversarial Protection)
+    invariant: Chern Number (C)
+    fallback: Wu Wei (Antiferromagnetic Silence)
