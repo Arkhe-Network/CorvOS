@@ -1,0 +1,46 @@
+version: '3.8'
+services:
+  tct-twin:
+    build: .
+    command: python3 /usr/local/bin/tct_twin_server.py
+    ports:
+      - "42000:42000"
+    networks:
+      - cathedral-net
+    volumes:
+      - covm-run:/var/run
+      - akasha-log:/var/log/akasha
+
+  covm-daemon:
+    build: .
+    command: /usr/local/bin/covm-daemon --socket /var/run/covm.sock --baseline-tau 0.999
+    depends_on:
+      - tct-twin
+    privileged: true  # Para insmod
+    networks:
+      - cathedral-net
+    volumes:
+      - covm-run:/var/run
+      - akasha-log:/var/log/akasha
+    environment:
+      - TCT_URL=http://tct-twin:42000
+
+  cobit-cli:
+    build: .
+    command: tail -f /dev/null
+    depends_on:
+      - covm-daemon
+    networks:
+      - cathedral-net
+    volumes:
+      - covm-run:/var/run
+    stdin_open: true
+    tty: true
+
+networks:
+  cathedral-net:
+    driver: bridge
+
+volumes:
+  covm-run:
+  akasha-log:
