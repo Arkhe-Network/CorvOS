@@ -303,15 +303,15 @@ pub enum Opcode {
     FINALLY  = 0xDC, YIELD    = 0xDD, RESUME   = 0xDE, EXIT     = 0xDF,
 
     // ── SYSTEM 0xE0-0xFF ────────────────────────────────────
-    SYS_INFO    = 0xE0, SYS_TIME    = 0xE1, SYS_DATE    = 0xE2,
-    SYS_UPTIME  = 0xE3, SYS_LOAD    = 0xE4, SYS_MEMORY  = 0xE5,
-    SYS_CPU     = 0xE6, SYS_GPU     = 0xE7, SYS_QPU     = 0xE8,
-    SYS_TCT     = 0xE9, SYS_VERSION = 0xEA, SYS_HALT    = 0xEB,
-    SYS_REBOOT  = 0xEC, SYS_SLEEP   = 0xED, SYS_WAKEUP  = 0xEE,
+    SYS_INFO    = 0xE0, SYS_TIME    = 0xE1, COH_LOSS    = 0xE2,
+    ENV_SPAWN   = 0xE3, PHASE_RECTIFY = 0xE4, COH_SEED    = 0xE5,
+    COH_BUBBLE  = 0xE6, AKA_QUERY_LOGN = 0xE7, PHASE_COMPLEMENT = 0xE8,
+    TAU_AVERAGE = 0xE9, SYS_VERSION = 0xEA, SYS_HALT    = 0xEB,
+    PEAK_COHERENCE = 0xEC, GOLDEN_RATIO_SPAWN = 0xED, ENTANGLEMENT_PERMUTE = 0xEE,
     SYS_CONFIG  = 0xEF,
-    META_REFLECT   = 0xF0, META_INTROSPECT = 0xF1, META_MODIFY  = 0xF2,
-    META_EVAL      = 0xF3, META_COMPILE    = 0xF4, META_LINK    = 0xF5,
-    META_LOAD      = 0xF6, META_UNLOAD     = 0xF7, META_DEBUG   = 0xF8,
+    META_REFLECT   = 0xF0, META_INTROSPECT = 0xF1, AKA_QUERY_LINEAR = 0xF2,
+    MIRROR_SYMMETRY = 0xF3, COH_INJECT = 0xF4, PHASE_NEST = 0xF5,
+    PHASE_ITERATE  = 0xF6, QTL_SCAN = 0xF7, MODULO_RESONANCE = 0xF8,
     META_TRACE     = 0xF9, META_PROFILE    = 0xFA, META_OPTIMIZE= 0xFB,
     META_VERIFY    = 0xFC, META_SIGN       = 0xFD, META_INVOKE  = 0xFE,
     META_TRANSCEND = 0xFF,
@@ -357,7 +357,8 @@ impl Opcode {
             Opcode::QTL_SYNC         => 200,
             Opcode::QTL_MERGE        => 300,
             Opcode::NET_OPTIMIZE     => 150,
-            Opcode::META_COMPILE     => 150,
+            Opcode::COH_INJECT       => 50,
+            Opcode::MODULO_RESONANCE => 10,
             Opcode::META_INVOKE      => 500,
             Opcode::META_TRANSCEND   => 137,  // Transcende em 137 ciclos
             Opcode::ADD | Opcode::SUB | Opcode::NEG => 2,
@@ -367,7 +368,7 @@ impl Opcode {
             Opcode::SIN | Opcode::COS | Opcode::TAN => 15,
             Opcode::JMP              => 1,
             Opcode::CALL | Opcode::RET => 2,
-            Opcode::SYS_TIME | Opcode::SYS_DATE => 2,
+            Opcode::SYS_TIME         => 2,
             _                        => 6,   // default
         }
     }
@@ -1189,11 +1190,164 @@ impl OrbVM {
                 self.set_reg(ops[0], RegVal::Int(h as i64));
             }
             Opcode::SYS_TIME    => { self.set_reg(ops[0], RegVal::Int(self.cycle_total as i64)); }
+            Opcode::COH_LOSS => {
+                // Cross Entropy: -Σ(q * log(p))
+                // ops[0]: addr array predicted, ops[1]: addr array real, ops[2]: len, ops[3]: target_reg
+                let p_addr = self.reg(ops[0]).as_i64() as usize;
+                let q_addr = self.reg(ops[1]).as_i64() as usize;
+                let len    = self.reg(ops[2]).as_i64() as usize;
+                let mut loss = 0.0;
+                for i in 0..len {
+                    if p_addr + i < self.mem_size && q_addr + i < self.mem_size {
+                        let p = self.memory[p_addr + i] as f64 / 255.0;
+                        let q = self.memory[q_addr + i] as f64 / 255.0;
+                        if p > 0.0 {
+                            loss -= q * p.ln();
+                        }
+                    }
+                }
+                self.set_reg(ops[3], RegVal::Float(loss));
+            }
+            Opcode::PHASE_RECTIFY => {
+                // Leaky ReLU: f(x) = x if x > 0 else 0.01x
+                let val = self.reg(ops[0]).as_f64();
+                let alpha = if ops.len() > 2 { self.reg(ops[2]).as_f64() } else { 0.01 };
+                let res = if val > 0.0 { val } else { alpha * val };
+                self.set_reg(ops[1], RegVal::Float(res));
+            }
+            Opcode::ENV_SPAWN => {
+                // Simula spawn de bolha de coerência
+                let orcid_hash = self.akasha.fnv1a(&self.orcid);
+                self.akasha.log(self.cycle_total, "ENV_SPAWN", 1, self.kuramoto.theta);
+                self.set_reg(ops[0], RegVal::Int(orcid_hash as i64));
+            }
+            Opcode::COH_SEED => {
+                // Geração de semente quântica via ruído de fase
+                let noise = (self.kuramoto.theta.sin() * 1e6).fract().abs();
+                self.set_reg(ops[0], RegVal::Float(noise));
+            }
+            Opcode::AKA_QUERY_LOGN => {
+                // Busca binária O(log n)
+                let addr = self.reg(ops[0]).as_i64() as usize;
+                let len  = self.reg(ops[1]).as_i64() as usize;
+                let target = self.reg(ops[2]).as_i64() as u8;
+                let mut low = 0;
+                let mut high = len;
+                let mut found_idx = -1;
+                while low < high {
+                    let mid = (low + high) / 2;
+                    if addr + mid >= self.mem_size { break; }
+                    let val = self.memory[addr + mid];
+                    if val == target {
+                        found_idx = mid as i64;
+                        break;
+                    } else if val < target {
+                        low = mid + 1;
+                    } else {
+                        high = mid;
+                    }
+                }
+                self.set_reg(ops[3], RegVal::Int(found_idx));
+            }
+            Opcode::AKA_QUERY_LINEAR => {
+                // Busca linear O(n)
+                let addr = self.reg(ops[0]).as_i64() as usize;
+                let len  = self.reg(ops[1]).as_i64() as usize;
+                let target = self.reg(ops[2]).as_i64() as u8;
+                let mut found_idx = -1;
+                for i in 0..len {
+                    if addr + i < self.mem_size && self.memory[addr + i] == target {
+                        found_idx = i as i64;
+                        break;
+                    }
+                }
+                self.set_reg(ops[3], RegVal::Int(found_idx));
+            }
+            Opcode::PHASE_COMPLEMENT => {
+                // Two Sum: encontra i, j tal que arr[i] + arr[j] == target
+                let addr = self.reg(ops[0]).as_i64() as usize;
+                let len  = self.reg(ops[1]).as_i64() as usize;
+                let target = self.reg(ops[2]).as_i64() as u8;
+                let mut res = (-1i64, -1i64);
+                'outer: for i in 0..len {
+                    for j in i+1..len {
+                        if addr + i < self.mem_size && addr + j < self.mem_size {
+                            if self.memory[addr + i] + self.memory[addr + j] == target {
+                                res = (i as i64, j as i64);
+                                break 'outer;
+                            }
+                        }
+                    }
+                }
+                self.set_reg(ops[3], RegVal::Int(res.0));
+                if ops.len() > 4 { self.set_reg(ops[4], RegVal::Int(res.1)); }
+            }
             Opcode::SYS_VERSION => {
                 let h = self.akasha.fnv1a(self.version);
                 self.set_reg(ops[0], RegVal::Int(h as i64));
             }
             Opcode::SYS_HALT    => { self.halted = true; }
+            Opcode::COH_BUBBLE => {
+                // Bubble Sort: Ordenação por troca adjacente O(n²)
+                let addr = self.reg(ops[0]).as_i64() as usize;
+                let len  = self.reg(ops[1]).as_i64() as usize;
+                for i in 0..len {
+                    for j in 0..len - i - 1 {
+                        if addr + j + 1 < self.mem_size {
+                            if self.memory[addr + j] > self.memory[addr + j + 1] {
+                                self.memory.swap(addr + j, addr + j + 1);
+                            }
+                        }
+                    }
+                }
+            }
+            Opcode::TAU_AVERAGE => {
+                // Mean Calculation: Média aritmética
+                let addr = self.reg(ops[0]).as_i64() as usize;
+                let len  = self.reg(ops[1]).as_i64() as usize;
+                let mut sum = 0.0;
+                for i in 0..len {
+                    if addr + i < self.mem_size {
+                        sum += self.memory[addr + i] as f64;
+                    }
+                }
+                self.set_reg(ops[2], RegVal::Float(sum / len as f64));
+            }
+            Opcode::PEAK_COHERENCE => {
+                // Max in Array: Encontra o máximo
+                let addr = self.reg(ops[0]).as_i64() as usize;
+                let len  = self.reg(ops[1]).as_i64() as usize;
+                let mut max_val = 0u8;
+                for i in 0..len {
+                    if addr + i < self.mem_size {
+                        if self.memory[addr + i] > max_val {
+                            max_val = self.memory[addr + i];
+                        }
+                    }
+                }
+                self.set_reg(ops[2], RegVal::Int(max_val as i64));
+            }
+            Opcode::GOLDEN_RATIO_SPAWN => {
+                // Fibonacci Sequence: F(n)
+                let n = self.reg(ops[0]).as_i64();
+                let mut a = 0i64;
+                let mut b = 1i64;
+                for _ in 0..n {
+                    let tmp = a;
+                    a = b;
+                    b = tmp + b;
+                }
+                self.set_reg(ops[1], RegVal::Int(a));
+            }
+            Opcode::ENTANGLEMENT_PERMUTE => {
+                // Factorial: n!
+                let n = self.reg(ops[0]).as_i64();
+                let mut res = 1i64;
+                for i in 2..=n {
+                    res *= i;
+                }
+                self.set_reg(ops[1], RegVal::Int(res));
+            }
             Opcode::SYS_CONFIG  => {
                 // Configura parâmetros via registradores chave/valor
                 let key = self.reg(ops[0]).as_i64();
@@ -1204,6 +1358,79 @@ impl OrbVM {
                     2 => self.kuramoto.lambda      = val.clamp(0.0, 1.0),
                     _ => {}
                 }
+            }
+            Opcode::MIRROR_SYMMETRY => {
+                // Palindrome Check: Verifica simetria espelho
+                let addr = self.reg(ops[0]).as_i64() as usize;
+                let len  = self.reg(ops[1]).as_i64() as usize;
+                let mut is_palindrome = true;
+                for i in 0..len / 2 {
+                    if addr + i < self.mem_size && addr + len - 1 - i < self.mem_size {
+                        if self.memory[addr + i] != self.memory[addr + len - 1 - i] {
+                            is_palindrome = false;
+                            break;
+                        }
+                    }
+                }
+                self.set_reg(ops[2], RegVal::Int(is_palindrome as i64));
+            }
+            Opcode::COH_INJECT => {
+                // Array Insertion: Inserção com shift
+                let addr = self.reg(ops[0]).as_i64() as usize;
+                let len  = self.reg(ops[1]).as_i64() as usize;
+                let pos  = self.reg(ops[2]).as_i64() as usize;
+                let val  = self.reg(ops[3]).as_i64() as u8;
+                if addr + len < self.mem_size {
+                    for i in (pos..len).rev() {
+                        self.memory[addr + i + 1] = self.memory[addr + i];
+                    }
+                    self.memory[addr + pos] = val;
+                }
+            }
+            Opcode::QTL_SCAN => {
+                // Array Traversal: Varredura completa (simulada)
+                let addr = self.reg(ops[0]).as_i64() as usize;
+                let len  = self.reg(ops[1]).as_i64() as usize;
+                let mut health = 0.0;
+                for i in 0..len {
+                    if addr + i < self.mem_size {
+                        health += self.memory[addr + i] as f64 / 255.0;
+                    }
+                }
+                self.set_reg(ops[2], RegVal::Float(health / len as f64));
+            }
+            Opcode::PHASE_NEST => {
+                // Nested Loops: Representa topologia multi-dimensões
+                let n = self.reg(ops[0]).as_i64();
+                let m = self.reg(ops[1]).as_i64();
+                let mut acc = 0i64;
+                for _i in 0..n {
+                    for _j in 0..m {
+                        acc += 1;
+                    }
+                }
+                self.set_reg(ops[2], RegVal::Int(acc));
+            }
+            Opcode::PHASE_ITERATE => {
+                // Basic Looping: Batimento cardíaco básico
+                let n = self.reg(ops[0]).as_i64();
+                let mut acc = 0i64;
+                for _i in 0..n {
+                    acc += 1;
+                }
+                self.set_reg(ops[1], RegVal::Int(acc));
+            }
+            Opcode::MODULO_RESONANCE => {
+                // FizzBuzz: Harmônicos de interferência
+                let n = self.reg(ops[0]).as_i64();
+                let mut fizz_count = 0i64;
+                let mut buzz_count = 0i64;
+                for i in 1..=n {
+                    if i % 3 == 0 { fizz_count += 1; }
+                    if i % 5 == 0 { buzz_count += 1; }
+                }
+                self.set_reg(ops[1], RegVal::Int(fizz_count));
+                if ops.len() > 2 { self.set_reg(ops[2], RegVal::Int(buzz_count)); }
             }
             Opcode::META_REFLECT => {
                 // Reflexão: retorna o opcode atual como valor
@@ -1364,7 +1591,7 @@ impl ArkheAssembler {
     pub fn disparo_genesis() -> Vec<Instruction> {
         vec![
             // 1. Verificação de Ambiente e Inicialização
-            Instruction::new(Opcode::SYS_QPU, vec![0]),
+            Instruction::new(Opcode::NOP, vec![]),
             Instruction::new(Opcode::SYS_TIME, vec![R_TIME as u8]),
             Instruction::new(Opcode::AKA_LOG, vec![0, 1]), // Usando R0 como placeholder para epoch_sig
 
@@ -1502,6 +1729,46 @@ mod tests {
         ]);
         let result = vm.step();
         assert!(matches!(result, Err(OrbError::InsufficientCoherence)));
+    }
+
+    #[test]
+    fn test_modulo_resonance_fizzbuzz() {
+        let mut vm = OrbVM::new(256);
+        vm.regs[0] = RegVal::Int(15);
+        vm.load(vec![
+            Instruction::new(Opcode::MODULO_RESONANCE, vec![0, 1, 2]),
+            Instruction::new(Opcode::EXIT, vec![31]),
+        ]);
+        vm.run().unwrap();
+        // 15: 3,6,9,12,15 (5) | 5,10,15 (3)
+        assert_eq!(vm.regs[1].as_i64(), 5);
+        assert_eq!(vm.regs[2].as_i64(), 3);
+    }
+
+    #[test]
+    fn test_golden_ratio_fibonacci() {
+        let mut vm = OrbVM::new(256);
+        vm.regs[0] = RegVal::Int(10); // F(10)
+        vm.load(vec![
+            Instruction::new(Opcode::GOLDEN_RATIO_SPAWN, vec![0, 1]),
+            Instruction::new(Opcode::EXIT, vec![31]),
+        ]);
+        vm.run().unwrap();
+        // 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55
+        assert_eq!(vm.regs[1].as_i64(), 55);
+    }
+
+    #[test]
+    fn test_phase_rectify_leaky_relu() {
+        let mut vm = OrbVM::new(256);
+        vm.regs[0] = RegVal::Float(-10.0);
+        vm.regs[2] = RegVal::Float(0.01);
+        vm.load(vec![
+            Instruction::new(Opcode::PHASE_RECTIFY, vec![0, 1, 2]),
+            Instruction::new(Opcode::EXIT, vec![31]),
+        ]);
+        vm.run().unwrap();
+        assert!((vm.regs[1].as_f64() + 0.1).abs() < 1e-10);
     }
 
     #[test]
