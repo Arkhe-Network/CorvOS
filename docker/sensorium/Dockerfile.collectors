@@ -1,7 +1,5 @@
 FROM python:3.12-slim
-
 WORKDIR /app
-COPY user/sensorium/collectors/ ./
-RUN pip install --no-cache-dir requests redis websockets
-
-# O entrypoint será definido no deployment K8s (ex: python geo_collector.py)
+RUN pip install --no-cache-dir requests redis
+COPY collectors/*.py ./
+ENTRYPOINT ["python"]

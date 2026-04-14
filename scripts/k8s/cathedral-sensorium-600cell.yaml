@@ -14,7 +14,7 @@ data:
   COVM_BASELINE_TAU: "0.999"
   LAMBDA_SOC: "0.015"
   ORACLE_MODEL: "llama3.2:3b"
-  OLLAMA_URL: "http://ollama-service.arkhe.svc.cluster.local:11434/api/generate"
+  OLLAMA_URL: "http://ollama.arkhe.svc.cluster.local:11434/api/generate"
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -38,6 +38,13 @@ spec:
         command: ["redis-server", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
         ports:
         - containerPort: 6379
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "600Mi"
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -55,15 +62,23 @@ spec:
     spec:
       containers:
       - name: geo-collector
-        image: arkhe/geo-collector:onda2
+        image: arkhe/collectors:onda2
+        command: ["python", "geo_collector.py"]
         envFrom:
         - configMapRef:
             name: cathedral-config
+        resources:
+          limits: { cpu: "100m", memory: "128Mi" }
+          requests: { cpu: "50m", memory: "64Mi" }
       - name: soc-collector
-        image: arkhe/soc-collector:onda2
+        image: arkhe/collectors:onda2
+        command: ["python", "soc_collector.py"]
         envFrom:
         - configMapRef:
             name: cathedral-config
+        resources:
+          limits: { cpu: "100m", memory: "128Mi" }
+          requests: { cpu: "50m", memory: "64Mi" }
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -86,12 +101,71 @@ spec:
         envFrom:
         - configMapRef:
             name: cathedral-config
+        resources:
+          limits: { cpu: "500m", memory: "256Mi" }
+          requests: { cpu: "200m", memory: "128Mi" }
         volumeMounts:
         - name: akasha-log
           mountPath: /var/log/akasha
       volumes:
       - name: akasha-log
         emptyDir: {}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: fuse-engine-hpa
+  namespace: arkhe
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: fuse-engine
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: arkhe
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      containers:
+      - name: ollama
+        image: ollama/ollama:latest
+        ports:
+        - containerPort: 11434
+        resources:
+          limits: { cpu: "2", memory: "4Gi" }
+          requests: { cpu: "1", memory: "2Gi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  namespace: arkhe
+spec:
+  selector:
+    app: ollama
+  ports:
+  - port: 11434
+    targetPort: 11434
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -114,3 +188,6 @@ spec:
         envFrom:
         - configMapRef:
             name: cathedral-config
+        resources:
+          limits: { cpu: "200m", memory: "128Mi" }
+          requests: { cpu: "100m", memory: "64Mi" }
