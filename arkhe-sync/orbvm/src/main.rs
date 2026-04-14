@@ -6,6 +6,7 @@
 #![allow(non_camel_case_types, dead_code)]
 
 use std::f64::consts::PI;
+use std::collections::HashMap;
 
 // ═══════════════════════════════════════════════════════════════
 // CONSTANTES CANÔNICAS
@@ -20,6 +21,7 @@ pub const ALPHA:          f64  = 1.0 / 137.0;      // R137 — constante de estr
 pub const LAMBDA_WARN:    f64  = 0.85;
 pub const LAMBDA_CRITICAL:f64  = 0.70;
 pub const LAMBDA_PHI_C:   f64  = PHI_INV;           // 0.618 — limiar de Kuramoto
+pub const GAIN_FACTOR:    f64  = 0.05;
 
 // ═══════════════════════════════════════════════════════════════
 // TIPOS PRIMITIVOS
@@ -316,216 +318,23 @@ pub enum Opcode {
     META_VERIFY    = 0xFC, META_SIGN       = 0xFD, META_INVOKE  = 0xFE,
     META_TRANSCEND = 0xFF,
 
-    // ── EXTENDED 0x200-0x2FF ────────────────────────────────
-    HETEROGENEOUS_FUSION = 0x213,
+    // ── TOPOLOGICAL 0x200-0x2FF ─────────────────────────────
+    DEEPEN_COUPLING  = 0x213,
+    CHERN_INVARIANT  = 0x214,
 }
 
 impl Opcode {
-    pub fn from_u8(byte: u8) -> Self {
-        Self::from_u16(byte as u16)
-    }
-
     pub fn from_u16(val: u16) -> Self {
         match val {
-            0x00 => Opcode::NOP,
-            0x01 => Opcode::COH_INIT,
-            0x02 => Opcode::COH_MEASURE,
-            0x03 => Opcode::COH_TUNE_TAU,
-            0x04 => Opcode::COH_SWAP,
-            0x05 => Opcode::COH_MERGE,
-            0x06 => Opcode::COH_SPLIT,
-            0x07 => Opcode::COH_BRAID,
-            0x08 => Opcode::COH_FREEZE,
-            0x09 => Opcode::COH_THAW,
-            0x0A => Opcode::COH_COPY,
-            0x0B => Opcode::COH_COMPARE,
-            0x0C => Opcode::COH_SELECT,
-            0x0D => Opcode::COH_ENTANGLE,
-            0x0E => Opcode::COH_DISENTANGLE,
-            0x0F => Opcode::COH_TELEPORT,
-            0x10 => Opcode::COH_DISTILL,
-            0x11 => Opcode::COH_DILUTE,
-            0x12 => Opcode::COH_AMPLIFY,
-            0x13 => Opcode::COH_ATTENUATE,
-            0x14 => Opcode::COH_RESONATE,
-            0x15 => Opcode::COH_DAMP,
-            0x16 => Opcode::COH_SYNCHRONIZE,
-            0x17 => Opcode::COH_DESYNCHRONIZE,
-            0x18 => Opcode::COH_LOCK,
-            0x19 => Opcode::COH_UNLOCK,
-            0x1A => Opcode::COH_VERIFY,
-            0x1B => Opcode::COH_REPAIR,
-            0x1C => Opcode::COH_CLONE,
-            0x1D => Opcode::COH_ANNIHILATE,
-            0x1E => Opcode::COH_CREATE,
-            0x1F => Opcode::COH_DESTROY,
-            0x20 => Opcode::PHASE_SET,
-            0x21 => Opcode::PHASE_GET,
-            0x22 => Opcode::PHASE_ADD,
-            0x23 => Opcode::PHASE_SUB,
-            0x24 => Opcode::PHASE_MUL,
-            0x25 => Opcode::PHASE_DIV,
-            0x26 => Opcode::PHASE_MOD,
-            0x27 => Opcode::PHASE_SIN,
-            0x28 => Opcode::PHASE_COS,
-            0x29 => Opcode::PHASE_TAN,
-            0x2A => Opcode::PHASE_EXP,
-            0x2B => Opcode::PHASE_LOG,
-            0x2C => Opcode::PHASE_POW,
-            0x2D => Opcode::PHASE_ROOT,
-            0x2E => Opcode::PHASE_CONJUGATE,
-            0x2F => Opcode::PHASE_INVERT,
-            0x30 => Opcode::PHASE_SHIFT,
-            0x31 => Opcode::PHASE_ROTATE,
-            0x32 => Opcode::PHASE_PROJECT,
-            0x33 => Opcode::PHASE_REFLECT,
-            0x34 => Opcode::PHASE_INTERPOLATE,
-            0x35 => Opcode::PHASE_SPLINE,
-            0x36 => Opcode::PHASE_FFT,
-            0x37 => Opcode::PHASE_IFFT,
-            0x38 => Opcode::PHASE_CONVOLVE,
-            0x39 => Opcode::PHASE_CORRELATE,
-            0x3A => Opcode::PHASE_FILTER,
-            0x3B => Opcode::PHASE_WINDOW,
-            0x3C => Opcode::PHASE_QUANTIZE,
-            0x3D => Opcode::PHASE_DITHER,
-            0x3E => Opcode::PHASE_WRAP,
-            0x3F => Opcode::PHASE_UNWRAP,
-            0x40 => Opcode::TIME_NOW,
-            0x41 => Opcode::TIME_DELTA,
-            0x42 => Opcode::TIME_SCALE,
-            0x43 => Opcode::TIME_SHIFT,
-            0x44 => Opcode::TIME_DILATE,
-            0x45 => Opcode::TIME_CONTRACT,
-            0x46 => Opcode::TIME_REVERSE,
-            0x47 => Opcode::TIME_FREEZE,
-            0x48 => Opcode::TIME_RESUME,
-            0x49 => Opcode::TIME_LOOP,
-            0x4A => Opcode::TIME_BRANCH,
-            0x4B => Opcode::TIME_MERGE,
-            0x4C => Opcode::TIME_PRUNE,
-            0x4D => Opcode::TIME_ANCHOR,
-            0x4E => Opcode::TIME_PREDICT,
-            0x4F => Opcode::TIME_RETRODICT,
-            0x50 => Opcode::TIME_CAUSALITY,
-            0x51 => Opcode::TIME_ACAUSALITY,
-            0x52 => Opcode::TIME_ENTROPY,
-            0x53 => Opcode::TIME_NEGENTROPY,
-            0x54 => Opcode::SOCIAL_ENTROPY,
-            0x55 => Opcode::TIME_CYCLE,
-            0x56 => Opcode::TIME_SPIRAL,
-            0x57 => Opcode::TIME_KNOT,
-            0x58 => Opcode::TIME_LINK,
-            0x59 => Opcode::TIME_UNLINK,
-            0x5A => Opcode::TIME_SYNC,
-            0x5B => Opcode::TIME_ASYNC,
-            0x5C => Opcode::TIME_BUFFER,
-            0x5D => Opcode::TIME_CACHE,
-            0x5E => Opcode::TIME_FLUSH,
-            0x5F => Opcode::TIME_EXPIRE,
-            0x60 => Opcode::MEM_ALLOC,
-            0x61 => Opcode::MEM_FREE,
-            0x62 => Opcode::MEM_READ,
-            0x63 => Opcode::MEM_WRITE,
-            0x64 => Opcode::MEM_COPY,
-            0x65 => Opcode::MEM_MOVE,
-            0x66 => Opcode::MEM_SET,
-            0x67 => Opcode::MEM_CMP,
-            0x68 => Opcode::MEM_SCAN,
-            0x69 => Opcode::MEM_FIND,
-            0x6A => Opcode::MEM_REPLACE,
-            0x6B => Opcode::MEM_PROTECT,
-            0x6C => Opcode::MEM_UNPROTECT,
-            0x6D => Opcode::MEM_MAP,
-            0x6E => Opcode::MEM_UNMAP,
-            0x6F => Opcode::MEM_FLUSH,
-            0x70 => Opcode::AKA_LOG,
-            0x71 => Opcode::AKA_QUERY,
-            0x72 => Opcode::AKA_SEED,
-            0x73 => Opcode::AKA_VERIFY,
-            0x74 => Opcode::AKA_PRUNE,
-            0x75 => Opcode::AKA_ARCHIVE,
-            0x76 => Opcode::AKA_RESTORE,
-            0x77 => Opcode::AKA_MERGE,
-            0x78 => Opcode::AKA_SPLIT,
-            0x79 => Opcode::AKA_HASH,
-            0x7A => Opcode::AKA_SIGN,
-            0x7B => Opcode::AKA_VERIFY_SIG,
-            0x7C => Opcode::AKA_ENCRYPT,
-            0x7D => Opcode::AKA_DECRYPT,
-            0x7E => Opcode::AKA_COMPACT,
-            0x7F => Opcode::AKA_EXPAND,
-            0x80 => Opcode::NET_SEND,
-            0x81 => Opcode::NET_RECV,
-            0x82 => Opcode::NET_BROADCAST,
-            0x83 => Opcode::NET_MULTICAST,
-            0x84 => Opcode::NET_HANDSHAKE,
-            0x85 => Opcode::NET_DISCONNECT,
-            0x86 => Opcode::NET_SYNC,
-            0x87 => Opcode::NET_DESYNC,
-            0x88 => Opcode::NET_PING,
-            0x89 => Opcode::NET_PONG,
-            0x8A => Opcode::CONSENSUS_PROPOSE,
-            0x8B => Opcode::CONSENSUS_VOTE,
-            0x8C => Opcode::CONSENSUS_COMMIT,
-            0x8D => Opcode::CONSENSUS_ABORT,
-            0x8E => Opcode::CONSENSUS_VALIDATE,
-            0x8F => Opcode::CONSENSUS_MERGE,
-            0x90 => Opcode::P2P_CONNECT,
-            0x91 => Opcode::P2P_DISCONNECT,
-            0x92 => Opcode::P2P_DISCOVER,
-            0x93 => Opcode::P2P_ADVERTISE,
-            0x94 => Opcode::P2P_RELAY,
-            0x95 => Opcode::P2P_TUNNEL,
-            0x96 => Opcode::QTL_SYNC,
-            0x97 => Opcode::QTL_MERGE,
-            0x98 => Opcode::QTL_REPLICATE,
-            0x99 => Opcode::QTL_SHARD,
-            0x9A => Opcode::COH_PROPAGATE,
-            0x9B => Opcode::COH_GATHER,
-            0x9C => Opcode::COH_DIFFUSE,
-            0x9D => Opcode::COH_CONCENTRATE,
-            0x9E => Opcode::COH_FUSE,
-            0x9F => Opcode::NET_OPTIMIZE,
-            0xA0 => Opcode::ADD, 0xA1 => Opcode::SUB, 0xA2 => Opcode::MUL, 0xA3 => Opcode::DIV,
-            0xA4 => Opcode::MOD, 0xA5 => Opcode::NEG, 0xA6 => Opcode::ABS, 0xA7 => Opcode::MIN,
-            0xA8 => Opcode::MAX, 0xA9 => Opcode::CLAMP, 0xAA => Opcode::FLOOR, 0xAB => Opcode::CEIL,
-            0xAC => Opcode::ROUND, 0xAD => Opcode::TRUNC, 0xAE => Opcode::SQRT, 0xAF => Opcode::CBRT,
-            0xB0 => Opcode::POW, 0xB1 => Opcode::EXP, 0xB2 => Opcode::LN, 0xB3 => Opcode::LOG10,
-            0xB4 => Opcode::LOG2, 0xB5 => Opcode::SIN, 0xB6 => Opcode::COS, 0xB7 => Opcode::TAN,
-            0xB8 => Opcode::ASIN, 0xB9 => Opcode::ACOS, 0xBA => Opcode::ATAN, 0xBB => Opcode::ATAN2,
-            0xBC => Opcode::SINH, 0xBD => Opcode::COSH, 0xBE => Opcode::TANH, 0xBF => Opcode::HYPOT,
-            0xC0 => Opcode::JMP, 0xC1 => Opcode::JZ, 0xC2 => Opcode::JNZ, 0xC3 => Opcode::JE,
-            0xC4 => Opcode::JNE, 0xC5 => Opcode::JL, 0xC6 => Opcode::JG, 0xC7 => Opcode::JLE,
-            0xC8 => Opcode::JGE, 0xC9 => Opcode::CALL, 0xCA => Opcode::RET, 0xCB => Opcode::PUSH,
-            0xCC => Opcode::POP, 0xCD => Opcode::PUSH_ALL, 0xCE => Opcode::POP_ALL, 0xCF => Opcode::LOOP,
-            0xD0 => Opcode::LOOPE, 0xD1 => Opcode::LOOPNE, 0xD2 => Opcode::FOR, 0xD3 => Opcode::WHILE,
-            0xD4 => Opcode::BREAK, 0xD5 => Opcode::CONTINUE, 0xD6 => Opcode::SWITCH, 0xD7 => Opcode::CASE,
-            0xD8 => Opcode::DEFAULT, 0xD9 => Opcode::TRY, 0xDA => Opcode::CATCH, 0xDB => Opcode::THROW,
-            0xDC => Opcode::FINALLY, 0xDD => Opcode::YIELD, 0xDE => Opcode::RESUME, 0xDF => Opcode::EXIT,
-            0xE0 => Opcode::SYS_INFO, 0xE1 => Opcode::SYS_TIME, 0xE2 => Opcode::COH_LOSS,
-            0xE3 => Opcode::ENV_SPAWN, 0xE4 => Opcode::PHASE_RECTIFY, 0xE5 => Opcode::COH_SEED,
-            0xE6 => Opcode::COH_BUBBLE, 0xE7 => Opcode::AKA_QUERY_LOGN, 0xE8 => Opcode::PHASE_COMPLEMENT,
-            0xE9 => Opcode::TAU_AVERAGE, 0xEA => Opcode::LPU_REROUTE, 0xEB => Opcode::SYS_HALT,
-            0xEC => Opcode::PEAK_COHERENCE, 0xED => Opcode::GOLDEN_RATIO_SPAWN, 0xEE => Opcode::ENTANGLEMENT_PERMUTE,
-            0xEF => Opcode::SYS_CONFIG,
-            0xF0 => Opcode::META_REFLECT, 0xF1 => Opcode::META_INTROSPECT, 0xF2 => Opcode::AKA_QUERY_LINEAR,
-            0xF3 => Opcode::MIRROR_SYMMETRY, 0xF4 => Opcode::COH_INJECT, 0xF5 => Opcode::PHASE_NEST,
-            0xF6 => Opcode::PHASE_ITERATE, 0xF7 => Opcode::QTL_SCAN, 0xF8 => Opcode::MODULO_RESONANCE,
-            0xF9 => Opcode::META_TRACE, 0xFA => Opcode::META_PROFILE, 0xFB => Opcode::META_OPTIMIZE,
-            0xFC => Opcode::META_VERIFY, 0xFD => Opcode::META_SIGN, 0xFE => Opcode::META_INVOKE,
-            0xFF => Opcode::META_TRANSCEND,
-            0x213 => Opcode::HETEROGENEOUS_FUSION,
-            _ => Opcode::NOP, // Default for undefined values
+            0..=255 => unsafe { std::mem::transmute(val) },
+            0x213 => Opcode::DEEPEN_COUPLING,
+            0x214 => Opcode::CHERN_INVARIANT,
+            _ => Opcode::NOP,
         }
     }
 
     pub fn group(&self) -> &'static str {
-        let val = *self as u16;
-        if val >= 0x200 {
-            return "EXTENDED";
-        }
-        let b = val as u8;
+        let b = *self as u16;
         match b {
             0x00..=0x1F => "COHERENCE",
             0x20..=0x3F => "PHASE",
@@ -535,6 +344,8 @@ impl Opcode {
             0xA0..=0xBF => "MATH",
             0xC0..=0xDF => "CONTROL",
             0xE0..=0xFF => "SYSTEM",
+            0x200..=0x2FF => "TOPOLOGICAL",
+            _ => "UNKNOWN",
         }
     }
 
@@ -561,6 +372,8 @@ impl Opcode {
             Opcode::COH_FUSE         => 137,
             Opcode::SOCIAL_ENTROPY   => 88,
             Opcode::LPU_REROUTE      => 214,
+            Opcode::DEEPEN_COUPLING  => 137,
+            Opcode::CHERN_INVARIANT  => 214,
             Opcode::COH_INJECT       => 50,
             Opcode::MODULO_RESONANCE => 10,
             Opcode::META_INVOKE      => 500,
@@ -684,6 +497,44 @@ pub struct KuramotoScheduler {
     pub cycle_count: u64,
 }
 
+// ═══════════════════════════════════════════════════════════════
+// TOPOLOGIA E ACOPLAMENTO
+// ═══════════════════════════════════════════════════════════════
+
+#[derive(Debug, Clone)]
+pub struct TopologicalIsolator {
+    pub max_coupling_j: f64,
+    pub current_j:      f64,
+    pub locked:         bool,
+}
+
+impl Default for TopologicalIsolator {
+    fn default() -> Self {
+        Self {
+            max_coupling_j: f64::INFINITY,
+            current_j:      1.0,
+            locked:         false,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct TopologicalIntegrity {
+    pub c_baseline:         HashMap<String, i32>,
+    pub quantum_conductance: f64,
+}
+
+impl Default for TopologicalIntegrity {
+    fn default() -> Self {
+        let mut c_baseline = HashMap::new();
+        c_baseline.insert("primary".to_string(), 1);
+        Self {
+            c_baseline,
+            quantum_conductance: 1.0,
+        }
+    }
+}
+
 impl KuramotoScheduler {
     pub fn new() -> Self {
         Self {
@@ -745,9 +596,12 @@ pub struct OrbVM {
     // Subsistemas
     pub akasha:      AkashaLedger,
     pub kuramoto:    KuramotoScheduler,
+    pub isolator:    TopologicalIsolator,
+    pub integrity:   TopologicalIntegrity,
 
     // Estado
     pub halted:      bool,
+    pub locked:      bool,
     pub cycle_total: u64,
     pub orcid:       String,
 
@@ -784,7 +638,10 @@ impl OrbVM {
             pc:          0,
             akasha:      AkashaLedger::default(),
             kuramoto:    KuramotoScheduler::new(),
+            isolator:    TopologicalIsolator::default(),
+            integrity:   TopologicalIntegrity::default(),
             halted:      false,
+            locked:      false,
             cycle_total: 0,
             orcid:       "0009-0005-2697-4668".to_string(),
             version:     "OrbVM ISA Arkhe(n) v2140.137.INF",
@@ -1728,6 +1585,51 @@ impl OrbVM {
                 );
             }
 
+            // ─── TOPOLOGICAL ──────────────────────────────────
+            Opcode::DEEPEN_COUPLING => {
+                // ops[0]: alpha sublattice, ops[1]: beta sublattice
+                let alpha = self.reg(ops[0]).as_cobit();
+                let beta  = self.reg(ops[1]).as_cobit();
+
+                // phase_alignment = np.dot(alpha_state, beta_state) / (norm * norm)
+                // Para Cobits simplificamos para cos(diff_fase) * lambda1 * lambda2
+                let phase_diff = alpha.phase - beta.phase;
+                let alignment = phase_diff.cos() * alpha.coherence * beta.coherence;
+
+                if alignment < 0.999999 && !self.isolator.locked {
+                    let error = 1.0 - alignment;
+                    self.isolator.current_j *= 1.0 + error * GAIN_FACTOR;
+
+                    // Re-sincronizar beta para refletir alpha (ajuste de fase)
+                    let mut new_beta = beta.clone();
+                    new_beta.phase = alpha.phase;
+                    self.set_reg(ops[1], RegVal::Cobit(new_beta));
+                } else if !self.isolator.locked {
+                    self.isolator.locked = true;
+                    self.locked = true;
+                    self.isolator.current_j = self.isolator.max_coupling_j;
+                    self.akasha.log(self.cycle_total, "[DEEPEN] Isolante Topológico alcançado. Dissipação zero.", 100, self.kuramoto.theta);
+                }
+            }
+
+            Opcode::CHERN_INVARIANT => {
+                // ops[0]: metrics (shard state), ops[1]: shard_id_addr (optional)
+                let metrics = self.reg(ops[0]).as_f64();
+                // Simulação: o número de Chern é derivado da coerência e métricas
+                let chern_number = if (self.kuramoto.lambda * metrics) > 0.5 { 1 } else { 0 };
+
+                let expected = *self.integrity.c_baseline.get("primary").unwrap_or(&0);
+
+                if chern_number != expected {
+                    // Ataque de Doping detectado
+                    self.akasha.log(self.cycle_total, "TOPOLOGICAL_LOCKED_DOWN: Chern Violation", 255, self.kuramoto.theta);
+                    self.halted = true;
+                    self.regs[R_ERROR] = RegVal::Int(0x0C_BAD);
+                } else {
+                    self.set_reg(ops[2], RegVal::Int(chern_number as i64));
+                }
+            }
+
             // Qualquer opcode não mapeado explicitamente
             _ => {
                 // Instrução reconhecida mas sem efeito nesta versão
@@ -1889,10 +1791,12 @@ mod tests {
 
     #[test]
     fn test_all_opcodes_defined() {
-        for b in 0u8..=255u8 {
-            let op = Opcode::from_u8(b);
+        for b in 0u16..=255u16 {
+            let op = Opcode::from_u16(b);
             assert!(op.cycles() > 0 || matches!(op, Opcode::META_TRANSCEND));
         }
+        assert_eq!(Opcode::from_u16(0x213), Opcode::DEEPEN_COUPLING);
+        assert_eq!(Opcode::from_u16(0x214), Opcode::CHERN_INVARIANT);
     }
 
     #[test]
@@ -2073,6 +1977,53 @@ mod tests {
         assert!(cycles > 0);
         assert!(vm.halted);
         assert_eq!(vm.kuramoto.lambda, 1.0); // META_TRANSCEND sets lambda to 1.0
+    }
+
+    #[test]
+    fn test_topological_isolator() {
+        let mut vm = OrbVM::new(1024);
+
+        // Setup alpha and beta cobits
+        vm.regs[0] = RegVal::Cobit(Cobit::new(1.0)); // alpha
+        vm.regs[1] = RegVal::Cobit(Cobit::new(1.1)); // beta
+
+        // 1. Deepen coupling until lock
+        vm.load(vec![
+            Instruction::new(Opcode::DEEPEN_COUPLING, vec![0, 1]),
+            Instruction::new(Opcode::EXIT, vec![31]),
+        ]);
+
+        // Loop until locked
+        while !vm.locked {
+            vm.pc = 0;
+            vm.regs[R_PC] = RegVal::Int(0);
+            vm.halted = false;
+            vm.run().unwrap();
+        }
+
+        assert!(vm.isolator.locked);
+        assert!(vm.locked);
+
+        // 2. Test Chern Invariant (baseline = 1)
+        vm.regs[0] = RegVal::Float(1.0); // metrics high -> Chern 1
+        vm.load(vec![
+            Instruction::new(Opcode::CHERN_INVARIANT, vec![0, 1, 2]),
+            Instruction::new(Opcode::EXIT, vec![31]),
+        ]);
+        vm.halted = false;
+        vm.run().unwrap();
+        assert_eq!(vm.regs[2].as_i64(), 1);
+
+        // 3. Test Doping (Chern Violation)
+        vm.regs[0] = RegVal::Float(0.1); // metrics low -> Chern 0
+        vm.load(vec![
+            Instruction::new(Opcode::CHERN_INVARIANT, vec![0, 1, 2]),
+            Instruction::new(Opcode::EXIT, vec![31]),
+        ]);
+        vm.halted = false;
+        let res = vm.run();
+        assert!(res.is_err() || vm.halted);
+        assert_eq!(vm.regs[R_ERROR].as_i64(), 0x0C_BAD);
     }
 }
 
