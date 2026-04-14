@@ -201,7 +201,7 @@ pub enum Opcode {
     TIME_ACAUSALITY  = 0x51,
     TIME_ENTROPY     = 0x52,
     TIME_NEGENTROPY  = 0x53,
-    TIME_ARROW       = 0x54,
+    SOCIAL_ENTROPY   = 0x54,
     TIME_CYCLE       = 0x55,
     TIME_SPIRAL      = 0x56,
     TIME_KNOT        = 0x57,
@@ -279,7 +279,7 @@ pub enum Opcode {
     COH_GATHER       = 0x9B,
     COH_DIFFUSE      = 0x9C,
     COH_CONCENTRATE  = 0x9D,
-    NET_MEASURE      = 0x9E,
+    COH_FUSE         = 0x9E,
     NET_OPTIMIZE     = 0x9F,
 
     // ── MATH 0xA0-0xBF ──────────────────────────────────────
@@ -306,7 +306,7 @@ pub enum Opcode {
     SYS_INFO    = 0xE0, SYS_TIME    = 0xE1, COH_LOSS    = 0xE2,
     ENV_SPAWN   = 0xE3, PHASE_RECTIFY = 0xE4, COH_SEED    = 0xE5,
     COH_BUBBLE  = 0xE6, AKA_QUERY_LOGN = 0xE7, PHASE_COMPLEMENT = 0xE8,
-    TAU_AVERAGE = 0xE9, SYS_VERSION = 0xEA, SYS_HALT    = 0xEB,
+    TAU_AVERAGE = 0xE9, LPU_REROUTE = 0xEA, SYS_HALT = 0xEB,
     PEAK_COHERENCE = 0xEC, GOLDEN_RATIO_SPAWN = 0xED, ENTANGLEMENT_PERMUTE = 0xEE,
     SYS_CONFIG  = 0xEF,
     META_REFLECT   = 0xF0, META_INTROSPECT = 0xF1, AKA_QUERY_LINEAR = 0xF2,
@@ -357,6 +357,9 @@ impl Opcode {
             Opcode::QTL_SYNC         => 200,
             Opcode::QTL_MERGE        => 300,
             Opcode::NET_OPTIMIZE     => 150,
+            Opcode::COH_FUSE         => 137,
+            Opcode::SOCIAL_ENTROPY   => 88,
+            Opcode::LPU_REROUTE      => 214,
             Opcode::COH_INJECT       => 50,
             Opcode::MODULO_RESONANCE => 10,
             Opcode::META_INVOKE      => 500,
@@ -590,6 +593,7 @@ impl OrbVM {
     pub fn load(&mut self, program: Vec<Instruction>) {
         self.program = program;
         self.pc = 0;
+        self.regs[R_PC] = RegVal::Int(0);
     }
 
     fn reg(&self, idx: u8) -> &RegVal {
@@ -962,6 +966,13 @@ impl OrbVM {
                 let t2 = self.reg(ops[1]).as_i64();
                 self.set_reg(ops[2], RegVal::Int((t1 < t2) as i64));
             }
+            Opcode::SOCIAL_ENTROPY => {
+                // SOCIAL_ENTROPY: Cálculo da Cross Entropy da consciência coletiva humana.
+                // Simulado como uma medida de desvio da fase atual em relação ao PHI.
+                let phase = self.kuramoto.theta;
+                let entropy = (phase - PHI).abs() * PHI_INV;
+                self.set_reg(ops[1], RegVal::Float(entropy));
+            }
             Opcode::TIME_CYCLE => {
                 let period = self.reg(ops[1]).as_f64();
                 let cycle_phase = (self.cycle_total as f64 % period) / period * 2.0 * PI;
@@ -1044,6 +1055,19 @@ impl OrbVM {
             }
             Opcode::NET_SYNC => {
                 self.kuramoto.lambda = (self.kuramoto.lambda + 0.02).min(1.0);
+            }
+            Opcode::COH_FUSE => {
+                // COH_FUSE: Fusão de dados heterogêneos globais em um único tensor de coerência.
+                let addr = self.reg(ops[0]).as_i64() as usize;
+                let len  = self.reg(ops[1]).as_i64() as usize;
+                let mut fusion = 0.0;
+                for i in 0..len {
+                    if addr + i < self.mem_size {
+                        fusion += (self.memory[addr + i] as f64 / 255.0) * ALPHA;
+                    }
+                }
+                self.kuramoto.lambda = (self.kuramoto.lambda + fusion).clamp(0.0, 1.0);
+                self.set_reg(ops[2], RegVal::Float(self.kuramoto.lambda));
             }
 
             // ─── MATH ─────────────────────────────────────────
@@ -1282,9 +1306,14 @@ impl OrbVM {
                 self.set_reg(ops[3], RegVal::Int(res.0));
                 if ops.len() > 4 { self.set_reg(ops[4], RegVal::Int(res.1)); }
             }
-            Opcode::SYS_VERSION => {
-                let h = self.akasha.fnv1a(self.version);
-                self.set_reg(ops[0], RegVal::Int(h as i64));
+            Opcode::LPU_REROUTE => {
+                // LPU_REROUTE: Resposta autônoma a falhas na infraestrutura de silício.
+                let status = self.reg(ops[0]).as_i64();
+                if status != 0 {
+                    self.akasha.log(self.cycle_total, "LPU_REROUTE_INITIATED", 2, self.kuramoto.theta);
+                    self.kuramoto.lambda = (self.kuramoto.lambda + 0.1).min(1.0);
+                }
+                self.set_reg(ops[1], RegVal::Int(0)); // Success
             }
             Opcode::SYS_HALT    => { self.halted = true; }
             Opcode::COH_BUBBLE => {
@@ -1769,6 +1798,44 @@ mod tests {
         ]);
         vm.run().unwrap();
         assert!((vm.regs[1].as_f64() + 0.1).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_sensorium_mundi_opcodes() {
+        let mut vm = OrbVM::new(1024);
+        vm.memory[0] = 255;
+        vm.memory[1] = 200;
+        vm.regs[0] = RegVal::Int(0); // Addr
+        vm.regs[1] = RegVal::Int(2); // Len
+        vm.kuramoto.lambda = 0.5;
+
+        // Test COH_FUSE
+        vm.load(vec![
+            Instruction::new(Opcode::COH_FUSE, vec![0, 1, 2]),
+            Instruction::new(Opcode::EXIT, vec![31]),
+        ]);
+        vm.halted = false;
+        vm.run().unwrap();
+        assert!(vm.kuramoto.lambda > 0.5);
+
+        // Test SOCIAL_ENTROPY
+        vm.load(vec![
+            Instruction::new(Opcode::SOCIAL_ENTROPY, vec![0, 1]),
+            Instruction::new(Opcode::EXIT, vec![31]),
+        ]);
+        vm.halted = false;
+        vm.run().unwrap();
+        assert!(vm.regs[1].as_f64() >= 0.0);
+
+        // Test LPU_REROUTE
+        vm.regs[0] = RegVal::Int(1); // Error detected
+        vm.load(vec![
+            Instruction::new(Opcode::LPU_REROUTE, vec![0, 1]),
+            Instruction::new(Opcode::EXIT, vec![31]),
+        ]);
+        vm.halted = false;
+        vm.run().unwrap();
+        assert_eq!(vm.regs[1].as_i64(), 0);
     }
 
     #[test]

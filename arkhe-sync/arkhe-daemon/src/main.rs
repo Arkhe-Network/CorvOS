@@ -46,6 +46,15 @@ async fn main() {
         tui.update(QuantumState { fidelity: 0.99 });
         tui.render();
 
+        // Layer 7: Sensorium Mundi Integration
+        if let Ok(data) = std::fs::read_to_string("/tmp/sensorium_pipe") {
+            if let Ok(fusion) = serde_json::from_str::<serde_json::Value>(&data) {
+                let gl = fusion["global_lambda"].as_f64().unwrap_or(0.99);
+                println!("[SENSORIUM] Pulsar Planetário Sincronizado: λ_G = {:.4}", gl);
+                tui.update(QuantumState { fidelity: gl });
+            }
+        }
+
         distillery.observe([0u8; 32]);
         resonance.broadcast_state(&[0u8; 32], &[0u8; 32]).await;
 
