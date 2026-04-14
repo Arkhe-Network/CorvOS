@@ -9,6 +9,7 @@ static float global_lambda_2 = 1.0f;
 static int urban_sync_active = 0;
 static int meditation_mode = 0;
 static int januslock_sealed = 1;
+static int system_locked = 0;
 
 void arkhe_daemon_init() {
     arkhe_vro_log("Arkhe Daemon: Global Deploy v1.0 (GRACE) - Coherence Engine Active.");
@@ -33,6 +34,11 @@ void arkhe_daemon_command(const char *cmd) {
 
 float arkhe_get_global_coherence() {
     return global_lambda_2;
+}
+
+void arkhe_lock_topology() {
+    system_locked = 1;
+    arkhe_vro_log("[DEEPEN] Isolante Topológico alcançado. Dissipação zero.");
 }
 
 void arkhe_vro_log(const char *message) {
