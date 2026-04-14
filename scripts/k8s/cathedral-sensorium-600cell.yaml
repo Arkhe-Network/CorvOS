@@ -1,0 +1,116 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: arkhe
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cathedral-config
+  namespace: arkhe
+data:
+  REDIS_HOST: "akasha-spine"
+  REDIS_PORT: "6379"
+  COVM_BASELINE_TAU: "0.999"
+  LAMBDA_SOC: "0.015"
+  ORACLE_MODEL: "llama3.2:3b"
+  OLLAMA_URL: "http://ollama-service.arkhe.svc.cluster.local:11434/api/generate"
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: akasha-spine
+  namespace: arkhe
+spec:
+  serviceName: "akasha-spine"
+  replicas: 3
+  selector:
+    matchLabels:
+      app: akasha-spine
+  template:
+    metadata:
+      labels:
+        app: akasha-spine
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        command: ["redis-server", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+        ports:
+        - containerPort: 6379
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: cathedral-nerve-endings
+  namespace: arkhe
+spec:
+  selector:
+    matchLabels:
+      tier: sensorium
+  template:
+    metadata:
+      labels:
+        tier: sensorium
+    spec:
+      containers:
+      - name: geo-collector
+        image: arkhe/geo-collector:onda2
+        envFrom:
+        - configMapRef:
+            name: cathedral-config
+      - name: soc-collector
+        image: arkhe/soc-collector:onda2
+        envFrom:
+        - configMapRef:
+            name: cathedral-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fuse-engine
+  namespace: arkhe
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fuse-engine
+  template:
+    metadata:
+      labels:
+        app: fuse-engine
+    spec:
+      containers:
+      - name: fuse
+        image: arkhe/fuse-engine:onda2
+        envFrom:
+        - configMapRef:
+            name: cathedral-config
+        volumeMounts:
+        - name: akasha-log
+          mountPath: /var/log/akasha
+      volumes:
+      - name: akasha-log
+        emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oracle-voice
+  namespace: arkhe
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oracle-voice
+  template:
+    metadata:
+      labels:
+        app: oracle-voice
+    spec:
+      containers:
+      - name: oracle
+        image: arkhe/oracle-voice:onda2
+        envFrom:
+        - configMapRef:
+            name: cathedral-config

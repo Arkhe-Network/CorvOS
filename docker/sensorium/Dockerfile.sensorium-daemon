@@ -1,0 +1,11 @@
+FROM python:3.12-slim
+
+RUN apt-get update && apt-get install -y \
+    iputils-ping \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY user/sensorium/*.py ./
+RUN pip install --no-cache-dir aiohttp requests redis websockets
+
+ENTRYPOINT ["python", "sensorium_daemon.py"]

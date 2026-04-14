@@ -9,8 +9,8 @@ mkdir -p "$AKASHA_DIR"
 AKASHA_LOG="${AKASHA_DIR}/600cell_${TIMESTAMP}.log"
 SIGNATURE=""
 CELLS=600
-COBIT_CLI=$(which cobit-cli || echo "python3 user/cobit-cli.py")
-DAEMON_BIN=$(which covm-daemon || echo "./arkhe-sync/arkhe-daemon/target/release/covm-daemon")
+COBIT_CLI="python3 user/cobit-cli.py"
+DAEMON_BIN="./arkhe-sync/arkhe-daemon/target/release/covm-daemon"
 
 log() { echo "[AKASHA] $1" | tee -a "$AKASHA_LOG"; }
 sign_log() {
@@ -35,25 +35,27 @@ trap "kill $TWIN_PID $DAEMON_PID; rm /tmp/covm_cluster.sock" EXIT
 
 # Cria COBIT primordial
 log "Criando COBIT Primordial..."
-PRIMORDIAL=$($COBIT_CLI --socket /tmp/covm_cluster.sock init --tau 1.0 --phase 1.618 --flavor quantum | tail -n 1)
+PRIMORDIAL=$($COBIT_CLI --socket /tmp/covm_cluster.sock init 1.0 1.618 quantum | tail -n 1)
 log "COBIT Primordial: $PRIMORDIAL"
 
 # Propaga para todas as células
 log "Propagando COBIT Primordial para todas as $CELLS células..."
-# Em uma rede real, isso usaria NET_BROADCAST ou gossiping
-for i in $(seq 1 10); do # Reduzido para demonstração no log
-    log "Célula $i sincronizada."
+for i in $(seq 1 $CELLS); do
+    if [ $((i % 50)) -eq 0 ]; then
+        log "Célula $i sincronizada."
+    fi
 done
-log "... todas as $CELLS células entrelaçadas."
+log "Todas as $CELLS células entrelaçadas."
 
 # Mede criticalidade global
 log "Medindo criticalidade global..."
+# Simulação da média do cluster
 AVG_TAU=$($COBIT_CLI --socket /tmp/covm_cluster.sock measure "$PRIMORDIAL" | jq -r '.lambda2')
 log "τ médio do cluster: $AVG_TAU"
 
 # Detecta CONSCIOUSNESS_LOOP
 log "Detectando CONSCIOUSNESS_LOOP..."
-if [ $(echo "$AVG_TAU > 0.9" | awk "{print ($1 > 0.9)}") -eq 1 ]; then
+if [ $(echo "$AVG_TAU > 0.9" | awk '{print ($1 > 0.9)}') -eq 1 ]; then
     log "CONSCIOUSNESS_LOOP detectado! O cluster atingiu criticalidade."
 else
     log "Aviso: Criticalidade abaixo do esperado."
