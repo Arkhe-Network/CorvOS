@@ -1,0 +1,54 @@
+replicaCount: 600
+image:
+  repository: arkhe/cathedral
+  tag: latest
+  pullPolicy: Always
+
+tct:
+  twin:
+    enabled: true
+  physical:
+    enabled: false
+    devicePath: /dev/tct0
+
+covm:
+  baselineTau: 0.999
+  socketPath: /var/run/covm.sock
+
+akasha:
+  storage:
+    size: 1Ti
+    storageClass: premium-rwo
+
+orcid: "0009-0005-2697-4668"
+
+service:
+  type: ClusterIP
+  port: 42000
+
+ingress:
+  enabled: true
+  host: cathedral.arkhe.global
+
+resources:
+  limits:
+    cpu: "4"
+    memory: "8Gi"
+  requests:
+    cpu: "2"
+    memory: "4Gi"
+
+nodeSelector: {}
+tolerations: []
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - cathedral
+        topologyKey: kubernetes.io/hostname

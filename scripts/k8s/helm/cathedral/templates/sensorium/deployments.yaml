@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sensorium-daemon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sensorium-daemon
+  template:
+    metadata:
+      labels:
+        app: sensorium-daemon
+    spec:
+      containers:
+      - name: sensorium
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        command: ["python3", "/opt/cathedral/sensorium/sensorium_daemon.py"]
+        volumeMounts:
+        - name: akasha-log
+          mountPath: /var/log/akasha
+      volumes:
+      - name: akasha-log
+        emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sensorium-collectors
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sensorium-collectors
+  template:
+    metadata:
+      labels:
+        app: sensorium-collectors
+    spec:
+      containers:
+      - name: geo-collector
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        command: ["python3", "/opt/cathedral/sensorium/collectors/geo_collector.py"]
+        env:
+        - name: REDIS_HOST
+          value: "redis-service"
+      - name: gdelt-collector
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        command: ["python3", "/opt/cathedral/sensorium/collectors/gdelt_collector.py"]
+        env:
+        - name: REDIS_HOST
+          value: "redis-service"
