@@ -6,6 +6,7 @@
 #![allow(non_camel_case_types, dead_code)]
 
 use std::f64::consts::PI;
+use std::collections::HashMap;
 
 // ═══════════════════════════════════════════════════════════════
 // CONSTANTES CANÔNICAS
@@ -20,6 +21,7 @@ pub const ALPHA:          f64  = 1.0 / 137.0;      // R137 — constante de estr
 pub const LAMBDA_WARN:    f64  = 0.85;
 pub const LAMBDA_CRITICAL:f64  = 0.70;
 pub const LAMBDA_PHI_C:   f64  = PHI_INV;           // 0.618 — limiar de Kuramoto
+pub const GAIN_FACTOR:    f64  = 0.05;
 
 // ═══════════════════════════════════════════════════════════════
 // TIPOS PRIMITIVOS
@@ -109,7 +111,7 @@ impl RegVal {
 // OPCODES — ISA Arkhe(n) v2140.137.∞
 // ═══════════════════════════════════════════════════════════════
 
-#[repr(u8)]
+#[repr(u16)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Opcode {
     // ── COHERENCE 0x00-0x1F ─────────────────────────────────
@@ -315,16 +317,24 @@ pub enum Opcode {
     META_TRACE     = 0xF9, META_PROFILE    = 0xFA, META_OPTIMIZE= 0xFB,
     META_VERIFY    = 0xFC, META_SIGN       = 0xFD, META_INVOKE  = 0xFE,
     META_TRANSCEND = 0xFF,
+
+    // ── TOPOLOGICAL 0x200-0x2FF ─────────────────────────────
+    DEEPEN_COUPLING  = 0x213,
+    CHERN_INVARIANT  = 0x214,
 }
 
 impl Opcode {
-    pub fn from_u8(byte: u8) -> Self {
-        // SAFETY: all 256 values are defined
-        unsafe { std::mem::transmute(byte) }
+    pub fn from_u16(val: u16) -> Self {
+        match val {
+            0..=255 => unsafe { std::mem::transmute(val) },
+            0x213 => Opcode::DEEPEN_COUPLING,
+            0x214 => Opcode::CHERN_INVARIANT,
+            _ => Opcode::NOP,
+        }
     }
 
     pub fn group(&self) -> &'static str {
-        let b = *self as u8;
+        let b = *self as u16;
         match b {
             0x00..=0x1F => "COHERENCE",
             0x20..=0x3F => "PHASE",
@@ -334,6 +344,8 @@ impl Opcode {
             0xA0..=0xBF => "MATH",
             0xC0..=0xDF => "CONTROL",
             0xE0..=0xFF => "SYSTEM",
+            0x200..=0x2FF => "TOPOLOGICAL",
+            _ => "UNKNOWN",
         }
     }
 
@@ -360,6 +372,8 @@ impl Opcode {
             Opcode::COH_FUSE         => 137,
             Opcode::SOCIAL_ENTROPY   => 88,
             Opcode::LPU_REROUTE      => 214,
+            Opcode::DEEPEN_COUPLING  => 137,
+            Opcode::CHERN_INVARIANT  => 214,
             Opcode::COH_INJECT       => 50,
             Opcode::MODULO_RESONANCE => 10,
             Opcode::META_INVOKE      => 500,
@@ -483,6 +497,44 @@ pub struct KuramotoScheduler {
     pub cycle_count: u64,
 }
 
+// ═══════════════════════════════════════════════════════════════
+// TOPOLOGIA E ACOPLAMENTO
+// ═══════════════════════════════════════════════════════════════
+
+#[derive(Debug, Clone)]
+pub struct TopologicalIsolator {
+    pub max_coupling_j: f64,
+    pub current_j:      f64,
+    pub locked:         bool,
+}
+
+impl Default for TopologicalIsolator {
+    fn default() -> Self {
+        Self {
+            max_coupling_j: f64::INFINITY,
+            current_j:      1.0,
+            locked:         false,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct TopologicalIntegrity {
+    pub c_baseline:         HashMap<String, i32>,
+    pub quantum_conductance: f64,
+}
+
+impl Default for TopologicalIntegrity {
+    fn default() -> Self {
+        let mut c_baseline = HashMap::new();
+        c_baseline.insert("primary".to_string(), 1);
+        Self {
+            c_baseline,
+            quantum_conductance: 1.0,
+        }
+    }
+}
+
 impl KuramotoScheduler {
     pub fn new() -> Self {
         Self {
@@ -544,9 +596,12 @@ pub struct OrbVM {
     // Subsistemas
     pub akasha:      AkashaLedger,
     pub kuramoto:    KuramotoScheduler,
+    pub isolator:    TopologicalIsolator,
+    pub integrity:   TopologicalIntegrity,
 
     // Estado
     pub halted:      bool,
+    pub locked:      bool,
     pub cycle_total: u64,
     pub orcid:       String,
 
@@ -583,7 +638,10 @@ impl OrbVM {
             pc:          0,
             akasha:      AkashaLedger::default(),
             kuramoto:    KuramotoScheduler::new(),
+            isolator:    TopologicalIsolator::default(),
+            integrity:   TopologicalIntegrity::default(),
             halted:      false,
+            locked:      false,
             cycle_total: 0,
             orcid:       "0009-0005-2697-4668".to_string(),
             version:     "OrbVM ISA Arkhe(n) v2140.137.INF",
@@ -1501,6 +1559,51 @@ impl OrbVM {
                 );
             }
 
+            // ─── TOPOLOGICAL ──────────────────────────────────
+            Opcode::DEEPEN_COUPLING => {
+                // ops[0]: alpha sublattice, ops[1]: beta sublattice
+                let alpha = self.reg(ops[0]).as_cobit();
+                let beta  = self.reg(ops[1]).as_cobit();
+
+                // phase_alignment = np.dot(alpha_state, beta_state) / (norm * norm)
+                // Para Cobits simplificamos para cos(diff_fase) * lambda1 * lambda2
+                let phase_diff = alpha.phase - beta.phase;
+                let alignment = phase_diff.cos() * alpha.coherence * beta.coherence;
+
+                if alignment < 0.999999 && !self.isolator.locked {
+                    let error = 1.0 - alignment;
+                    self.isolator.current_j *= 1.0 + error * GAIN_FACTOR;
+
+                    // Re-sincronizar beta para refletir alpha (ajuste de fase)
+                    let mut new_beta = beta.clone();
+                    new_beta.phase = alpha.phase;
+                    self.set_reg(ops[1], RegVal::Cobit(new_beta));
+                } else if !self.isolator.locked {
+                    self.isolator.locked = true;
+                    self.locked = true;
+                    self.isolator.current_j = self.isolator.max_coupling_j;
+                    self.akasha.log(self.cycle_total, "[DEEPEN] Isolante Topológico alcançado. Dissipação zero.", 100, self.kuramoto.theta);
+                }
+            }
+
+            Opcode::CHERN_INVARIANT => {
+                // ops[0]: metrics (shard state), ops[1]: shard_id_addr (optional)
+                let metrics = self.reg(ops[0]).as_f64();
+                // Simulação: o número de Chern é derivado da coerência e métricas
+                let chern_number = if (self.kuramoto.lambda * metrics) > 0.5 { 1 } else { 0 };
+
+                let expected = *self.integrity.c_baseline.get("primary").unwrap_or(&0);
+
+                if chern_number != expected {
+                    // Ataque de Doping detectado
+                    self.akasha.log(self.cycle_total, "TOPOLOGICAL_LOCKED_DOWN: Chern Violation", 255, self.kuramoto.theta);
+                    self.halted = true;
+                    self.regs[R_ERROR] = RegVal::Int(0x0C_BAD);
+                } else {
+                    self.set_reg(ops[2], RegVal::Int(chern_number as i64));
+                }
+            }
+
             // Qualquer opcode não mapeado explicitamente
             _ => {
                 // Instrução reconhecida mas sem efeito nesta versão
@@ -1662,10 +1765,12 @@ mod tests {
 
     #[test]
     fn test_all_opcodes_defined() {
-        for b in 0u8..=255u8 {
-            let op = Opcode::from_u8(b);
+        for b in 0u16..=255u16 {
+            let op = Opcode::from_u16(b);
             assert!(op.cycles() > 0 || matches!(op, Opcode::META_TRANSCEND));
         }
+        assert_eq!(Opcode::from_u16(0x213), Opcode::DEEPEN_COUPLING);
+        assert_eq!(Opcode::from_u16(0x214), Opcode::CHERN_INVARIANT);
     }
 
     #[test]
@@ -1846,6 +1951,53 @@ mod tests {
         assert!(cycles > 0);
         assert!(vm.halted);
         assert_eq!(vm.kuramoto.lambda, 1.0); // META_TRANSCEND sets lambda to 1.0
+    }
+
+    #[test]
+    fn test_topological_isolator() {
+        let mut vm = OrbVM::new(1024);
+
+        // Setup alpha and beta cobits
+        vm.regs[0] = RegVal::Cobit(Cobit::new(1.0)); // alpha
+        vm.regs[1] = RegVal::Cobit(Cobit::new(1.1)); // beta
+
+        // 1. Deepen coupling until lock
+        vm.load(vec![
+            Instruction::new(Opcode::DEEPEN_COUPLING, vec![0, 1]),
+            Instruction::new(Opcode::EXIT, vec![31]),
+        ]);
+
+        // Loop until locked
+        while !vm.locked {
+            vm.pc = 0;
+            vm.regs[R_PC] = RegVal::Int(0);
+            vm.halted = false;
+            vm.run().unwrap();
+        }
+
+        assert!(vm.isolator.locked);
+        assert!(vm.locked);
+
+        // 2. Test Chern Invariant (baseline = 1)
+        vm.regs[0] = RegVal::Float(1.0); // metrics high -> Chern 1
+        vm.load(vec![
+            Instruction::new(Opcode::CHERN_INVARIANT, vec![0, 1, 2]),
+            Instruction::new(Opcode::EXIT, vec![31]),
+        ]);
+        vm.halted = false;
+        vm.run().unwrap();
+        assert_eq!(vm.regs[2].as_i64(), 1);
+
+        // 3. Test Doping (Chern Violation)
+        vm.regs[0] = RegVal::Float(0.1); // metrics low -> Chern 0
+        vm.load(vec![
+            Instruction::new(Opcode::CHERN_INVARIANT, vec![0, 1, 2]),
+            Instruction::new(Opcode::EXIT, vec![31]),
+        ]);
+        vm.halted = false;
+        let res = vm.run();
+        assert!(res.is_err() || vm.halted);
+        assert_eq!(vm.regs[R_ERROR].as_i64(), 0x0C_BAD);
     }
 }
 

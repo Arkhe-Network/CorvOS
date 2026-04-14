@@ -6,5 +6,6 @@ void arkhe_daemon_run();
 void arkhe_daemon_command(const char *cmd);
 float arkhe_get_global_coherence();
 void arkhe_vro_log(const char *message);
+void arkhe_lock_topology();
 
 #endif
