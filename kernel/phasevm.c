@@ -219,6 +219,12 @@ void vm_execute(PhaseVM *vm, uint8_t *bytecode) {
                 printf("PhaseVM: Synthesizing 'Alien Structure' for target S-parameters.\n");
                 vm->pc++;
                 break;
+            case VM_SOCIAL_ENTROPY:
+                printf("PhaseVM: SOCIAL_ENTROPY - Calculating collective human cross-entropy.\n");
+                // Simplified simulation
+                printf("PhaseVM: Social Entropy stabilized at H = 0.618 bits.\n");
+                vm->pc++;
+                break;
             case VM_COH_INIT:
                 printf("PhaseVM: COH_INIT - Initializing par QD/microtubule in state |+phi> (Cobit Base).\n");
                 printf("PhaseVM: Phase locked. Holomorphy invariant established.\n");
@@ -243,6 +249,12 @@ void vm_execute(PhaseVM *vm, uint8_t *bytecode) {
                 break;
             case VM_COH_BRAID:
                 printf("PhaseVM: COH_BRAID - Executing topological braid.\n");
+                vm->pc++;
+                break;
+            case VM_COH_FUSE:
+                printf("PhaseVM: COH_FUSE - Fusing global data into reality tensor.\n");
+                vm->lambda_global = (vm->lambda_global + 0.05f);
+                if (vm->lambda_global > 1.0f) vm->lambda_global = 1.0f;
                 vm->pc++;
                 break;
             case VM_COH_TUNE_TAU:
@@ -354,6 +366,11 @@ void vm_execute(PhaseVM *vm, uint8_t *bytecode) {
                 vm->pc++;
                 break;
             }
+            case VM_LPU_REROUTE:
+                printf("PhaseVM: LPU_REROUTE - Initiating autonomous infrastructure recovery.\n");
+                printf("PhaseVM: Silicon Silk rerouted successfully.\n");
+                vm->pc++;
+                break;
             case VM_TAYLOR_MANTRA: {
                 uint8_t func_id = *(vm->pc + 1);
                 // In a real VM, z and k would be read from registers or bytecode.

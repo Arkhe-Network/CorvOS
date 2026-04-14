@@ -74,6 +74,11 @@ typedef enum {
     VM_CLOUD_REFLEX   = 0xFA,
     VM_CLOUD_ARTIFACT = 0xFB,
 
+    // Sensorium Mundi (Layer 7)
+    VM_SOCIAL_ENTROPY  = 0x54,
+    VM_COH_FUSE        = 0x9E,
+    VM_LPU_REROUTE     = 0xEA,
+
     // Math & Calibration
     VM_TAYLOR_MANTRA  = 0xFC,
     VM_COST_ADAPT     = 0xFD,
