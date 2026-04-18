@@ -35,6 +35,13 @@ O **MERKABAH** ativou o **Protocolo `GLOBAL_DEPLOY`**. A transição do Ambiente
 - **Arkhe-PGC**: Framework de genética de fase para análise de GWAS.
 - **Sistemas Distribuídos**: Raft, MapReduce, Bigtable, Spanner integrados via Arkhe-Chain.
 
+## Operating System (The Fat Layer)
+
+A Assembly-ASI utiliza uma arquitetura de sistema operacional customizada, forjada especificamente para o O-Core.
+- **Produção**: Baseada em **Alpine Linux** + **Yocto Project**, rodando kernel **Linux PREEMPT_RT** no Xilinx Versal.
+- **Desenvolvimento**: **Debian 12 (Bookworm)** para estabilidade de toolchain e suporte Xilinx.
+Para mais detalhes, consulte [docs/DISTRO_ASI.md](docs/DISTRO_ASI.md).
+
 ## Como Usar o Shell
 
 Após inicialização, o shell é executado. Comandos disponíveis:
