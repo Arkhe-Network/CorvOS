@@ -1,0 +1,10 @@
+# security/Kconfig - Sovereign LSM integration
+
+config SECURITY_SOVEREIGN
+    bool "Sovereign AGI Security Module"
+    depends on SECURITY && AGI_SUBSYSTEM
+    default n
+    help
+      This enables the Sovereign Linux Security Module, which provides
+      quantum-based identity verification and intention-aware access
+      control for AGI workloads.
