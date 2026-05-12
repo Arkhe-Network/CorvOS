@@ -1,0 +1,159 @@
+// ============================================================================
+// ARKHE Ω‑TEMP — Substrato 6062: Linearity Checker
+// ============================================================================
+// Implementa a verificação de tipos lineares no tempo de compilação.
+// Garante que recursos como Fd<T> e ChildProcess:
+// - Não sejam copiados implicitamente.
+// - Sejam consumidos exatamente uma vez (fechados, anchored ou wait).
+// ============================================================================
+
+/// O estado de uma variável linear no type checker
+enum LinearState {
+    Unused,
+    Consumed,
+    Moved,
+}
+
+/// Ambiente de tipagem linear
+struct LinearEnv {
+    variables: Map<String, LinearState>,
+}
+
+impl LinearEnv {
+    fn new() -> Self {
+        LinearEnv { variables: Map::new() }
+    }
+
+    fn track(&mut self, name: String) {
+        self.variables.insert(name, LinearState::Unused);
+    }
+
+    fn consume(&mut self, name: &str) -> Result<(), TypeError> {
+        match self.variables.get(name) {
+            Some(LinearState::Unused) => {
+                self.variables.insert(name.to_string(), LinearState::Consumed);
+                Ok(())
+            }
+            Some(LinearState::Consumed) => Err(TypeError::AlreadyConsumed(name.to_string())),
+            Some(LinearState::Moved) => Err(TypeError::AlreadyMoved(name.to_string())),
+            None => Err(TypeError::NotTracked(name.to_string())),
+        }
+    }
+
+    fn check_all_consumed(&self) -> Result<(), TypeError> {
+        for (name, state) in &self.variables {
+            if *state == LinearState::Unused {
+                return Err(TypeError::UnconsumedResource(name.clone()));
+            }
+        }
+        Ok(())
+    }
+}
+
+/// Verifica a linearidade em uma função (AST)
+fn check_linearity(func: &FunctionAST) -> Result<(), TypeError> {
+    let mut env = LinearEnv::new();
+
+    // Registrar parâmetros lineares
+    for param in &func.params {
+        if is_linear_type(&param.type_info) {
+            env.track(param.name.clone());
+        }
+    }
+
+    // Percorrer corpo da função
+    check_block_linearity(&func.body, &mut env)?;
+
+    // Garantir que tudo foi consumido no final do escopo
+    env.check_all_consumed()
+}
+
+/// Percorre um bloco verificando o uso linear
+fn check_block_linearity(block: &BlockAST, env: &mut LinearEnv) -> Result<(), TypeError> {
+    for stmt in &block.statements {
+        match stmt {
+            StatementAST::Let(let_stmt) => {
+                // Se a expressão retorna um tipo linear, registrar a nova variável
+                check_expr_linearity(&let_stmt.expr, env)?;
+                if is_linear_type(&let_stmt.type_info) {
+                    env.track(let_stmt.name.clone());
+                }
+            }
+            StatementAST::Expr(expr) => {
+                check_expr_linearity(expr, env)?;
+            }
+            StatementAST::Return(expr_opt) => {
+                if let Some(expr) = expr_opt {
+                    check_expr_linearity(expr, env)?;
+                }
+                // No return, os recursos locais não-retornados devem ter sido consumidos
+            }
+            // Outros statements...
+            _ => {}
+        }
+    }
+    Ok(())
+}
+
+/// Verifica uso linear em expressões
+fn check_expr_linearity(expr: &ExprAST, env: &mut LinearEnv) -> Result<(), TypeError> {
+    match expr {
+        ExprAST::Variable(name) => {
+            // Se for um tipo linear, o uso simples conta como "move", o que o consome no contexto atual
+            if is_linear_variable(name) {
+                env.consume(name)?;
+            }
+            Ok(())
+        }
+        ExprAST::MethodCall(call) => {
+            // Verificar o receiver
+            check_expr_linearity(&call.receiver, env)?;
+
+            // Verificar argumentos
+            for arg in &call.args {
+                check_expr_linearity(arg, env)?;
+            }
+
+            // Tratamento especial para métodos que consomem (close, wait, anchor) vs métodos que pegam ref mut
+            if call.method_name == "close" || call.method_name == "wait" {
+                if let ExprAST::Variable(name) = &*call.receiver {
+                    env.consume(name)?;
+                }
+            }
+
+            Ok(())
+        }
+        ExprAST::FunctionCall(call) => {
+            for arg in &call.args {
+                check_expr_linearity(arg, env)?;
+            }
+            Ok(())
+        }
+        _ => Ok(())
+    }
+}
+
+/// Helper: verifica se um tipo é linear (Fd<T>, ChildProcess, etc)
+fn is_linear_type(t: &TypeInfo) -> bool {
+    // Na prática, checar a presença do atributo #[linear] na definição
+    t.name.starts_with("Fd<") || t.name == "ChildProcess"
+}
+
+/// Erros de tipagem linear
+enum TypeError {
+    AlreadyConsumed(String),
+    AlreadyMoved(String),
+    NotTracked(String),
+    UnconsumedResource(String),
+}
+
+impl std::fmt::Display for TypeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            TypeError::AlreadyConsumed(v) => write!(f, "Linear resource '{}' used after being consumed", v),
+            TypeError::AlreadyMoved(v) => write!(f, "Linear resource '{}' used after being moved", v),
+            TypeError::NotTracked(v) => write!(f, "Variable '{}' not tracked", v),
+            TypeError::UnconsumedResource(v) => write!(f, "Linear resource '{}' must be explicitly consumed (e.g., closed or waited) before leaving scope", v),
+        }
+    }
+}
