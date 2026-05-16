@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core-settlement
+  namespace: arkhe-production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: banking
+      component: core-settlement
+  template:
+    metadata:
+      labels:
+        app: banking
+        component: core-settlement
+    spec:
+      containers:
+      - name: core-settlement
+        image: python:3.9-slim
+        command: ["python3", "/app/banking/core_settlement.py"]
+        volumeMounts:
+        - name: app-code
+          mountPath: /app
+      volumes:
+      - name: app-code
+        hostPath:
+          path: /opt/arkhe
