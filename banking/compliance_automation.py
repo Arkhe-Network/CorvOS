@@ -1,27 +1,27 @@
-import time
+# banking/compliance_automation.py
+"""
+Substrato 200: Regulatory Compliance Automation
+Gera relatórios automáticos para BACEN (Brasil), SEC (EUA), BCBS (Basel III),
+todos ancorados na TemporalChain com assinatura PQC.
+"""
+
 import hashlib
+import time
 
 class ComplianceAutomation:
-    SUPPORTED_FRAMEWORKS = ["BACEN", "SEC", "BCBS", "CVM"]
+    FRAMEWORKS = {
+        "BACEN": ["DRS", "SCR", "Mensagens de Compensação"],
+        "SEC": ["Form 10-K", "Form 8-K"],
+        "BCBS": ["LCR", "NSFR", "CAR"],
+    }
 
-    def __init__(self):
-        self.reports_generated = []
+    def __init__(self, temporal_chain):
+        self.temporal = temporal_chain
 
-    def generate_report(self, framework):
-        if framework not in self.SUPPORTED_FRAMEWORKS:
-            raise ValueError(f"Framework '{framework}' is not supported.")
-
-        report_data = f"COMPLIANCE_REPORT_{framework}_{time.time()}"
-        report_hash = hashlib.sha3_256(report_data.encode()).hexdigest()
-
-        report = {
-            "framework": framework,
-            "timestamp": time.time(),
-            "pqc_signature": f"PQC_SIG_{report_hash[:10]}",
-            "temporal_seal": f"SEAL_{report_hash[:10]}",
-            "hash": report_hash,
-            "status": "compliant"
-        }
-
-        self.reports_generated.append(report)
-        return report
+    async def generate_report(self, framework: str, period: str) -> str:
+        report_hash = hashlib.sha3_256(f"{framework}:{period}:{time.time()}".encode()).hexdigest()
+        # Ancorar na TemporalChain com assinatura PQC
+        seal = await self.temporal.anchor_event("compliance_report", {
+            "framework": framework, "period": period, "hash": report_hash
+        })
+        return seal

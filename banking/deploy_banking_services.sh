@@ -1,34 +1,27 @@
 #!/bin/bash
-# Substrato 200: Enterprise Banking Deployment Orchestrator
+# deploy_banking_services.sh — Substrato 200: Enterprise Banking Activation
 
-echo "🚀 Iniciando deploy dos serviços bancários no Kubernetes..."
-echo "📦 Construindo containers..."
-# mock build commands
-sleep 1
+echo "🏦 Ativando serviços bancários Arkhe..."
 
-echo "🌐 Aplicando manifestos Core Settlement..."
-# kubectl apply -f core_settlement.yaml
-sleep 1
+# 1. Core Settlement
+kubectl apply -f k8s/banking/core_settlement.yaml -n arkhe-production
 
-echo "🛡️ Aplicando manifestos Fraud Detection..."
-# kubectl apply -f fraud_detection.yaml
-sleep 1
+# 2. Fraud Detection
+kubectl apply -f k8s/banking/fraud_detection.yaml -n arkhe-production
 
-echo "📜 Aplicando manifestos Compliance Automation..."
-# kubectl apply -f compliance.yaml
-sleep 1
+# 3. Compliance Automation (cron job diário)
+kubectl apply -f k8s/banking/compliance_cronjob.yaml -n arkhe-production
 
-echo "🔐 Configurando Quantum-Safe Custody..."
-# kubectl apply -f custody.yaml
-sleep 1
+# 4. Quantum Custody
+kubectl apply -f k8s/banking/custody_hsm.yaml -n arkhe-production
 
-echo "⚡ Inicializando RTGS..."
-# kubectl apply -f rtgs.yaml
-sleep 1
+# 5. RTGS (Real-Time Gross Settlement)
+kubectl apply -f k8s/banking/rtgs_qbus.yaml -n arkhe-production
 
-echo "📄 Subindo Trade Finance..."
-# kubectl apply -f trade_finance.yaml
-sleep 1
+# 6. Trade Finance
+kubectl apply -f k8s/banking/trade_finance.yaml -n arkhe-production
 
-echo "✅ Todos os serviços bancários foram implantados com sucesso."
-echo "⚖️ Consenso MAC + PQC ativo. Φ_C monitorado."
+# Verificar status
+kubectl get pods -n arkhe-production -l app=banking
+
+echo "✅ Serviços bancários ativados. Φ_C monitorando liquidações."

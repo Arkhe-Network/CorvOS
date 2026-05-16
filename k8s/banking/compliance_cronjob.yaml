@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: compliance-automation
+  namespace: arkhe-production
+spec:
+  schedule: "0 0 * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: banking
+            component: compliance-automation
+        spec:
+          containers:
+          - name: compliance-automation
+            image: python:3.9-slim
+            command: ["python3", "/app/banking/compliance_automation.py"]
+            volumeMounts:
+            - name: app-code
+              mountPath: /app
+          restartPolicy: OnFailure
+          volumes:
+          - name: app-code
+            hostPath:
+              path: /opt/arkhe

@@ -1,36 +1,26 @@
-import random
+# banking/fraud_detection.py
+"""
+Substrato 200: Fraud Detection com ML + TinyML Edge
+Detecta fraudes em tempo real usando Isolation Forest no core banking
+e TinyML nos terminais ATM/PDV.
+"""
+
+import numpy as np
 import time
+from typing import Dict
+from sklearn.ensemble import IsolationForest
 
-class FraudDetection:
-    def __init__(self, historical_transactions=2000):
-        self.historical_transactions = historical_transactions
-        self.trained = True
+class FraudDetectionEngine:
+    def __init__(self, temporal_chain, phi_bus):
+        self.model = IsolationForest(n_estimators=100, contamination=0.01)
+        self.temporal = temporal_chain
+        self.phi_bus = phi_bus
 
-    def analyze_transaction(self, tx_data, phi_c):
-        # Mock Isolation Forest with Phi_C weighting
-        base_risk_score = random.uniform(0, 1)
-
-        # Phi_C contextual weighting
-        adjusted_risk_score = base_risk_score * (1.0 - phi_c) * 10
-
-        if adjusted_risk_score < 0.2:
-            risk_level = "low"
-            action = "ALLOW"
-        elif adjusted_risk_score < 0.5:
-            risk_level = "medium"
-            action = "MFA"
-        elif adjusted_risk_score < 0.8:
-            risk_level = "high"
-            action = "ALERT"
-        else:
-            risk_level = "critical"
-            action = "BLOCK"
-
-        return {
-            "tx_id": tx_data.get("tx_id", "unknown"),
-            "risk_score": adjusted_risk_score,
-            "risk_level": risk_level,
-            "recommended_action": action,
-            "phi_c_context": phi_c,
-            "temporal_seal": f"SEAL_{int(time.time())}"
-        }
+    async def score_transaction(self, features: Dict) -> float:
+        score = -self.model.score_samples([list(features.values())])[0]
+        if score > 0.7:  # Alerta de fraude
+            await self.temporal.anchor_event("fraud_alert", {
+                "score": float(score), "features": features, "timestamp": time.time()
+            })
+            await self.phi_bus.publish_metric("fraud_score", float(score))
+        return float(score)

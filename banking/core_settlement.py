@@ -1,28 +1,58 @@
+# banking/core_settlement.py
+"""
+Substrato 200: Core Banking Settlement
+Liquidação interbancária com consenso MAC, assinatura PQC+quântica e ancoragem temporal.
+"""
+
+import asyncio
 import hashlib
 import time
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
 
-class CoreSettlement:
-    def __init__(self, phi_c_threshold=0.999):
-        self.phi_c_threshold = phi_c_threshold
-        self.transactions = []
+@dataclass
+class SettlementTransaction:
+    txn_id: str
+    sender_bank: str
+    receiver_bank: str
+    amount: float
+    currency: str = "BRL"
+    timestamp: float = field(default_factory=time.time)
+    mac_signatures: List[str] = field(default_factory=list)
+    pqc_signature: Optional[str] = None
+    temporal_seal: Optional[str] = None
 
-    def process_settlement(self, amount, phi_c, agents_count=3):
-        if phi_c < self.phi_c_threshold:
-            return {"status": "rejected", "reason": "phi_c_too_low", "phi_c": phi_c}
-        if agents_count < 3:
-            return {"status": "rejected", "reason": "insufficient_consensus_agents"}
+class CoreSettlementEngine:
+    """
+    Motor de liquidação bancária com garantias criptográficas.
+    Utiliza consenso MAC (≥3 agentes) para validar cada transação,
+    assinatura híbrida PQC+quântica para não-repúdio,
+    e ancoragem na TemporalChain para auditoria imutável.
+    """
+    def __init__(self, phi_bus, temporal_chain, hsm_signer):
+        self.phi_bus = phi_bus
+        self.temporal = temporal_chain
+        self.hsm = hsm_signer
 
-        tx_id = hashlib.sha3_256(f"{amount}{time.time()}".encode()).hexdigest()
-        pqc_signature = f"PQC_SIGNATURE_MOCK_{tx_id[:8]}"
-        temporal_seal = f"TEMPORAL_SEAL_MOCK_{tx_id[:8]}"
+    async def settle(self, txn: SettlementTransaction) -> bool:
+        # 1. Validar Φ_C global antes de liquidar
+        if await self.phi_bus.get_global_coherence() < 0.999:
+            return False
 
-        tx = {
-            "tx_id": tx_id,
-            "amount": amount,
-            "phi_c": phi_c,
-            "pqc_signature": pqc_signature,
-            "temporal_seal": temporal_seal,
-            "status": "settled"
-        }
-        self.transactions.append(tx)
-        return tx
+        # 2. Consenso MAC com 3+ agentes
+        approved = await self.phi_bus.request_consensus(
+            topic="settlement",
+            payload={"txn_id": txn.txn_id, "amount": txn.amount},
+            min_approvals=3
+        )
+        if not approved:
+            return False
+
+        # 3. Assinar com PQC via HSM
+        txn.pqc_signature = await self.hsm.sign(hashlib.sha3_256(str(txn).encode()).hexdigest())
+
+        # 4. Ancorar na TemporalChain
+        txn.temporal_seal = await self.temporal.anchor_event("settlement_completed", {
+            "txn_id": txn.txn_id, "amount": txn.amount, "banks": [txn.sender_bank, txn.receiver_bank]
+        })
+        return True

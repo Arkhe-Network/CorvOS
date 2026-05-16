@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: custody-hsm
+  namespace: arkhe-production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: banking
+      component: custody-hsm
+  template:
+    metadata:
+      labels:
+        app: banking
+        component: custody-hsm
+    spec:
+      containers:
+      - name: custody-hsm
+        image: python:3.9-slim
+        command: ["python3", "/app/banking/custody.py"]
+        volumeMounts:
+        - name: app-code
+          mountPath: /app
+      volumes:
+      - name: app-code
+        hostPath:
+          path: /opt/arkhe
