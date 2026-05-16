@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rtgs-qbus
+  namespace: arkhe-production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: banking
+      component: rtgs-qbus
+  template:
+    metadata:
+      labels:
+        app: banking
+        component: rtgs-qbus
+    spec:
+      containers:
+      - name: rtgs-qbus
+        image: python:3.9-slim
+        command: ["python3", "/app/banking/rtgs.py"]
+        volumeMounts:
+        - name: app-code
+          mountPath: /app
+      volumes:
+      - name: app-code
+        hostPath:
+          path: /opt/arkhe
